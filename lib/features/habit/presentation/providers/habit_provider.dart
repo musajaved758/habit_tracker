@@ -13,15 +13,30 @@ class HabitNotifier extends Notifier<List<HabitModel>> {
     return HiveService.getHabits();
   }
 
-  Future<void> addHabit(String name) async {
+  Future<void> addHabit({
+    required String name,
+    required String category,
+    required String frequency,
+    required int targetValue,
+    required String targetUnit,
+    required DateTime? reminderTime,
+    required String difficulty,
+    required String motivationNote,
+  }) async {
     final newHabit = HabitModel(
       id: const Uuid().v4(),
       name: name,
+      category: category,
+      frequency: frequency,
+      targetValue: targetValue,
+      targetUnit: targetUnit,
+      reminderTime: reminderTime,
+      difficulty: difficulty,
+      motivationNote: motivationNote,
       createdAt: DateTime.now(),
     );
     await HiveService.saveHabit(newHabit);
-    ref.invalidateSelf(); // Or manually update state
-    // state = [...state, newHabit];
+    ref.invalidateSelf();
   }
 
   Future<void> toggleCompletion(String habitId, DateTime date) async {

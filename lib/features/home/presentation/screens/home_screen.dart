@@ -13,15 +13,7 @@ class HomeScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = useState(DateTime.now());
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => const AddHabitDialog(),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+
       body: SafeArea(
         child: CustomScrollView(
           shrinkWrap: true,

@@ -26,7 +26,18 @@ class AddHabitDialog extends HookConsumerWidget {
         TextButton(
           onPressed: () {
             if (controller.text.isNotEmpty) {
-              ref.read(habitProvider.notifier).addHabit(controller.text);
+              ref
+                  .read(habitProvider.notifier)
+                  .addHabit(
+                    name: controller.text,
+                    category: 'Other',
+                    frequency: 'Daily',
+                    targetValue: 1,
+                    targetUnit: 'Times',
+                    reminderTime: null,
+                    difficulty: 'Medium',
+                    motivationNote: '',
+                  );
               Navigator.pop(context);
             }
           },

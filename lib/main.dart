@@ -4,6 +4,7 @@ import 'package:operation_brotherhood/features/home/presentation/screens/home_sc
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:operation_brotherhood/core/services/hive_service.dart';
+import 'package:operation_brotherhood/features/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Habit Tracker App',
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const MainScreen(),
     );
   }
 }
