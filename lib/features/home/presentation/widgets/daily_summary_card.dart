@@ -12,12 +12,41 @@ class DailySummaryCard extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final habits = ref.watch(habitProvider);
+    // Calculate total tasks active for the selected date
+    final activeHabits = habits.where((habit) {
+      final date = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+      );
+      final startDate = DateTime(
+        habit.createdAt.year,
+        habit.createdAt.month,
+        habit.createdAt.day,
+      );
+      final endDate = DateTime(
+        habit.endDate.year,
+        habit.endDate.month,
+        habit.endDate.day,
+      );
 
-    // Calculate completed tasks for the selected date
-    final completedTask = habits
+      final isInRange =
+          (date.isAtSameMomentAs(startDate) || date.isAfter(startDate)) &&
+          (date.isAtSameMomentAs(endDate) || date.isBefore(endDate));
+
+      if (!isInRange) return false;
+
+      if (habit.frequency == 'WEEKLY') {
+        return date.weekday == DateTime.saturday ||
+            date.weekday == DateTime.sunday;
+      }
+      return true;
+    }).toList();
+
+    final completedTask = activeHabits
         .where((habit) => habit.isCompletedOn(selectedDate))
         .length;
-    final totalTask = habits.length;
+    final totalTask = activeHabits.length;
 
     // Calculate efficiency percentage
     final efficiencyPercentage = totalTask > 0
@@ -29,17 +58,17 @@ class DailySummaryCard extends HookConsumerWidget {
 
     // Determine status
     String status = "PENDING";
-    Color statusColor = AppColors.glowingGreen;
+    Color statusColor = AppColors.habitPrimary;
 
     if (totalTask == 0) {
       status = "NO HABITS";
       statusColor = Colors.grey;
     } else if (completedTask == totalTask) {
       status = "COMPLETED";
-      statusColor = AppColors.glowingGreen;
+      statusColor = AppColors.habitPrimary;
     } else if (completedTask > 0) {
       status = "IN PROGRESS";
-      statusColor = AppColors.glowingGreen;
+      statusColor = AppColors.habitPrimary;
     }
 
     return Container(

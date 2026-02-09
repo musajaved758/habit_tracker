@@ -16,24 +16,28 @@ class HabitNotifier extends Notifier<List<HabitModel>> {
   Future<void> addHabit({
     required String name,
     required String category,
+    required int categoryIcon,
     required String frequency,
     required int targetValue,
     required String targetUnit,
     required DateTime? reminderTime,
-    required String difficulty,
+    required String priority,
     required String motivationNote,
+    required DateTime endDate,
   }) async {
     final newHabit = HabitModel(
       id: const Uuid().v4(),
       name: name,
       category: category,
+      categoryIcon: categoryIcon,
       frequency: frequency,
       targetValue: targetValue,
       targetUnit: targetUnit,
       reminderTime: reminderTime,
-      difficulty: difficulty,
+      priority: priority,
       motivationNote: motivationNote,
       createdAt: DateTime.now(),
+      endDate: endDate,
     );
     await HiveService.saveHabit(newHabit);
     ref.invalidateSelf();

@@ -19,35 +19,43 @@ class HabitModel {
   @HiveField(4, defaultValue: 'Other')
   final String category;
 
-  @HiveField(5, defaultValue: 'Daily')
+  @HiveField(5, defaultValue: 'DAILY')
   final String frequency;
 
   @HiveField(6, defaultValue: 1)
   final int targetValue;
 
-  @HiveField(7, defaultValue: 'Times')
+  @HiveField(7, defaultValue: 'TIMES')
   final String targetUnit;
 
   @HiveField(8)
   final DateTime? reminderTime;
 
-  @HiveField(9, defaultValue: 'Medium')
-  final String difficulty;
+  @HiveField(9, defaultValue: 'MEDIUM')
+  final String priority;
 
   @HiveField(10, defaultValue: '')
   final String motivationNote;
+
+  @HiveField(11)
+  final DateTime endDate;
+
+  @HiveField(12)
+  final int categoryIcon;
 
   HabitModel({
     required this.id,
     required this.name,
     required this.createdAt,
+    required this.endDate,
     this.completedDates = const [],
     this.category = 'Other',
-    this.frequency = 'Daily',
+    this.categoryIcon = 0xe24a, // Default icon (Icons.fitness_center)
+    this.frequency = 'DAILY',
     this.targetValue = 1,
-    this.targetUnit = 'Times',
+    this.targetUnit = 'TIMES',
     this.reminderTime,
-    this.difficulty = 'Medium',
+    this.priority = 'MEDIUM',
     this.motivationNote = '',
   });
 
@@ -61,26 +69,30 @@ class HabitModel {
     String? id,
     String? name,
     DateTime? createdAt,
+    DateTime? endDate,
     List<DateTime>? completedDates,
     String? category,
+    int? categoryIcon,
     String? frequency,
     int? targetValue,
     String? targetUnit,
     DateTime? reminderTime,
-    String? difficulty,
+    String? priority,
     String? motivationNote,
   }) {
     return HabitModel(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
+      endDate: endDate ?? this.endDate,
       completedDates: completedDates ?? this.completedDates,
       category: category ?? this.category,
+      categoryIcon: categoryIcon ?? this.categoryIcon,
       frequency: frequency ?? this.frequency,
       targetValue: targetValue ?? this.targetValue,
       targetUnit: targetUnit ?? this.targetUnit,
       reminderTime: reminderTime ?? this.reminderTime,
-      difficulty: difficulty ?? this.difficulty,
+      priority: priority ?? this.priority,
       motivationNote: motivationNote ?? this.motivationNote,
     );
   }

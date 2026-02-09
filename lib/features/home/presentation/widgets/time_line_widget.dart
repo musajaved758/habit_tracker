@@ -30,7 +30,7 @@ class TimeLineWidget extends HookConsumerWidget {
         monthPickerType: MonthPickerType.switcher,
         dateFormatter: DateFormatter.fullDateDMY(),
       ),
-      activeColor: AppColors.glowingGreen,
+      activeColor: AppColors.habitPrimary,
       dayProps: const EasyDayProps(
         dayStructure: DayStructure.dayStrDayNum,
         height: 80,
@@ -38,7 +38,7 @@ class TimeLineWidget extends HookConsumerWidget {
         borderColor: AppColors.border,
         activeDayStyle: DayStyle(
           decoration: BoxDecoration(
-            color: AppColors.glowingGreen,
+            color: AppColors.habitPrimary,
             borderRadius: BorderRadius.all(Radius.circular(12)),
             border: Border.fromBorderSide(BorderSide(color: AppColors.border)),
           ),
@@ -55,7 +55,7 @@ class TimeLineWidget extends HookConsumerWidget {
         final isCompleted = isDayFullyCompleted(date);
 
         Color bgColor = isSelected
-            ? AppColors.glowingGreen
+            ? AppColors.habitPrimary
             : AppColors.cardBackground;
         Color textColor = isSelected
             ? AppColors.primary
@@ -76,47 +76,48 @@ class TimeLineWidget extends HookConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.fromBorderSide(border),
             ),
-            child: isCompleted ? Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  date.day.toString(),
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),),
-                const SizedBox(height: 4),
+            child: isCompleted
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
 
-                  const Padding(
-                    padding: EdgeInsets.only(top: 2),
-                    child: Icon(
-                      Icons.check_rounded,
-                      size: 20,
-                      color: Colors.white,
-                    ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 2),
+                        child: Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        EasyDateFormatter.shortDayName(date, "en_US"),
+                        style: TextStyle(color: textColor, fontSize: 12),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        date.day.toString(),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-
-
-              ],
-            ) : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  EasyDateFormatter.shortDayName(date, "en_US"),
-                  style: TextStyle(color: textColor, fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date.day.toString(),
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
           ),
         );
       },

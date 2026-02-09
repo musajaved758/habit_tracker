@@ -20,13 +20,15 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       id: fields[0] as String,
       name: fields[1] as String,
       createdAt: fields[2] as DateTime,
+      endDate: fields[11] as DateTime,
       completedDates: (fields[3] as List).cast<DateTime>(),
       category: fields[4] == null ? 'Other' : fields[4] as String,
-      frequency: fields[5] == null ? 'Daily' : fields[5] as String,
+      categoryIcon: fields[12] as int,
+      frequency: fields[5] == null ? 'DAILY' : fields[5] as String,
       targetValue: fields[6] == null ? 1 : fields[6] as int,
-      targetUnit: fields[7] == null ? 'Times' : fields[7] as String,
+      targetUnit: fields[7] == null ? 'TIMES' : fields[7] as String,
       reminderTime: fields[8] as DateTime?,
-      difficulty: fields[9] == null ? 'Medium' : fields[9] as String,
+      priority: fields[9] == null ? 'MEDIUM' : fields[9] as String,
       motivationNote: fields[10] == null ? '' : fields[10] as String,
     );
   }
@@ -34,7 +36,7 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
   @override
   void write(BinaryWriter writer, HabitModel obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -54,9 +56,13 @@ class HabitModelAdapter extends TypeAdapter<HabitModel> {
       ..writeByte(8)
       ..write(obj.reminderTime)
       ..writeByte(9)
-      ..write(obj.difficulty)
+      ..write(obj.priority)
       ..writeByte(10)
-      ..write(obj.motivationNote);
+      ..write(obj.motivationNote)
+      ..writeByte(11)
+      ..write(obj.endDate)
+      ..writeByte(12)
+      ..write(obj.categoryIcon);
   }
 
   @override
