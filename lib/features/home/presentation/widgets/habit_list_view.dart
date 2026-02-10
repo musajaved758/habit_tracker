@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/features/habit/presentation/providers/habit_provider.dart';
-import 'package:operation_brotherhood/features/home/presentation/widgets/habit_card.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/features/habit/presentation/providers/habit_provider.dart';
+import 'package:iron_mind/features/home/presentation/widgets/habit_card.dart';
+import 'package:iron_mind/features/habit/habit_screen.dart';
 
 class HabitListView extends HookConsumerWidget {
   final DateTime selectedDate;
@@ -11,6 +13,8 @@ class HabitListView extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final habits = ref.watch(habitProvider);
+    final colors = Theme.of(context).appColors;
+
     final filteredHabits = habits.where((habit) {
       final date = DateTime(
         selectedDate.year,
@@ -28,14 +32,12 @@ class HabitListView extends HookConsumerWidget {
         habit.endDate.day,
       );
 
-      // 1. Range Check (Habit must be active on the selected date)
       final isInRange =
           (date.isAtSameMomentAs(startDate) || date.isAfter(startDate)) &&
           (date.isAtSameMomentAs(endDate) || date.isBefore(endDate));
 
       if (!isInRange) return false;
 
-      // 2. Frequency Check (Weekly habits only on weekends)
       if (habit.frequency == 'WEEKLY') {
         final isWeekend =
             date.weekday == DateTime.saturday ||
@@ -47,13 +49,13 @@ class HabitListView extends HookConsumerWidget {
     }).toList();
 
     if (filteredHabits.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
           child: Text(
             "No habits for this day.\nStay focused!",
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: colors.textMuted),
           ),
         ),
       );
@@ -67,7 +69,6 @@ class HabitListView extends HookConsumerWidget {
         final habit = filteredHabits[index];
         final isCompleted = habit.isCompletedOn(selectedDate);
 
-        // "Missed" logic: If date is in the past (before today) and not completed.
         final now = DateTime.now();
         final selectedDateOnly = DateTime(
           selectedDate.year,
@@ -94,6 +95,49 @@ class HabitListView extends HookConsumerWidget {
           priority: habit.priority,
           motivationNote: habit.motivationNote,
           selectedDate: selectedDate,
+          onEdit: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => HabitScreen(habitToEdit: habit),
+              ),
+            );
+          },
+          onDelete: () {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: colors.dialogBg,
+                title: Text(
+                  'Delete Habit',
+                  style: TextStyle(color: colors.textPrimary),
+                ),
+                content: Text(
+                  'Are you sure you want to delete this habit?',
+                  style: TextStyle(color: colors.textSecondary),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(color: colors.textSecondary),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(habitProvider.notifier).deleteHabit(habit.id);
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(color: AppColors.highPriorityColor),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:operation_brotherhood/features/challenge/data/models/challenge_model.dart';
-import 'package:operation_brotherhood/core/services/hive_service.dart';
+import 'package:iron_mind/features/challenge/data/models/challenge_model.dart';
+import 'package:iron_mind/core/services/hive_service.dart';
 import 'package:uuid/uuid.dart';
 
 final challengeProvider =

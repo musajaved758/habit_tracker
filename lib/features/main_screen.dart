@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/core/widgets/custom_nav_bar.dart';
-import 'package:operation_brotherhood/core/utils/barrels/screens.dart';
-import 'package:operation_brotherhood/core/providers/app_providers.dart';
-import 'package:operation_brotherhood/features/challenge/presentation/screens/challenge_screen.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/core/widgets/custom_nav_bar.dart';
+import 'package:iron_mind/core/utils/barrels/screens.dart';
+import 'package:iron_mind/core/providers/app_providers.dart';
+import 'package:iron_mind/features/challenge/presentation/screens/challenge_screen.dart';
 
 class MainScreen extends HookConsumerWidget {
   const MainScreen({super.key});
@@ -12,18 +12,28 @@ class MainScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navIndexProvider);
+    final isSwapped = ref.watch(swapHomeAndChallengeProvider);
+    final colors = Theme.of(context).appColors;
 
-    final pages = [
-      const HomeScreen(),
-      const PhaseScreen(),
-      const ChallengeScreen(),
-      const IntelScreen(),
-      const SettingScreen(),
-    ];
+    final pages = isSwapped
+        ? [
+            const ChallengeScreen(),
+            const HomeScreen(),
+            const PhaseScreen(),
+            const IntelScreen(),
+            const SettingScreen(),
+          ]
+        : [
+            const HomeScreen(),
+            const ChallengeScreen(),
+            const PhaseScreen(),
+            const IntelScreen(),
+            const SettingScreen(),
+          ];
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.habitPrimary,
+        backgroundColor: colors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(200)),
         onPressed: () {
           Navigator.push(

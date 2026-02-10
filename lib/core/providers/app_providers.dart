@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/legacy.dart';
 
 /// Provider for the bottom navigation bar index
 final navIndexProvider = StateProvider<int>((ref) => 0);
+final swapHomeAndChallengeProvider = StateProvider<bool>((ref) => false);
 
 /// Provider for the selected calendar date
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());

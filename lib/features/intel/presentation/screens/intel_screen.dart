@@ -3,25 +3,26 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/features/intel/presentation/providers/stats_provider.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/features/intel/presentation/providers/stats_provider.dart';
 
 class IntelScreen extends HookConsumerWidget {
   const IntelScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedView = useState('CHALLENGES'); // 'CHALLENGES' or 'HABITS'
+    final selectedView = useState('CHALLENGES');
+    final colors = Theme.of(context).appColors;
 
     return Scaffold(
-      backgroundColor: AppColors.habitBg,
+      backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'PROGRESS',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
             fontSize: 20,
@@ -31,7 +32,7 @@ class IntelScreen extends HookConsumerWidget {
       ),
       body: Column(
         children: [
-          _buildToggle(selectedView),
+          _buildToggle(selectedView, colors),
           Expanded(
             child: selectedView.value == 'CHALLENGES'
                 ? const _ChallengesView()
@@ -42,13 +43,16 @@ class IntelScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildToggle(ValueNotifier<String> selectedView) {
+  Widget _buildToggle(
+    ValueNotifier<String> selectedView,
+    AppColorScheme colors,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Container(
         height: 50,
         decoration: BoxDecoration(
-          color: AppColors.habitSurface,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -58,6 +62,7 @@ class IntelScreen extends HookConsumerWidget {
                 'CHALLENGES',
                 selectedView.value == 'CHALLENGES',
                 () => selectedView.value = 'CHALLENGES',
+                colors,
               ),
             ),
             Expanded(
@@ -65,6 +70,7 @@ class IntelScreen extends HookConsumerWidget {
                 'HABITS',
                 selectedView.value == 'HABITS',
                 () => selectedView.value = 'HABITS',
+                colors,
               ),
             ),
           ],
@@ -73,21 +79,26 @@ class IntelScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _toggleItem(String label, bool isSelected, VoidCallback onTap) {
+  Widget _toggleItem(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    AppColorScheme colors,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.habitPrimary : Colors.transparent,
+          color: isSelected ? colors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey,
+            color: isSelected ? Colors.white : colors.textMuted,
             fontWeight: FontWeight.w900,
             fontSize: 12,
             letterSpacing: 1.1,
@@ -104,36 +115,40 @@ class _ChallengesView extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(challengeStatsProvider);
+    final colors = Theme.of(context).appColors;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('OVERALL CHALLENGE PROGRESS'),
+          _sectionHeader('OVERALL CHALLENGE PROGRESS', colors),
           const SizedBox(height: 20),
-          _buildRadialProgress(stats),
+          _buildRadialProgress(stats, colors),
           const SizedBox(height: 40),
-          _sectionHeader('STREAK & CONSISTENCY'),
+          _sectionHeader('STREAK & CONSISTENCY', colors),
           const SizedBox(height: 20),
-          _buildConsistencyInsight(stats),
+          _buildConsistencyInsight(stats, colors),
           const SizedBox(height: 40),
-          _sectionHeader('PROGRESS OVER TIME'),
+          _sectionHeader('PROGRESS OVER TIME', colors),
           const SizedBox(height: 20),
-          _buildProgressChart(stats.completionHistory),
-          const SizedBox(height: 100), // Bottom padding
+          _buildProgressChart(stats.completionHistory, colors),
+          const SizedBox(height: 100),
         ],
       ),
     );
   }
 
-  Widget _buildRadialProgress(ChallengeIntelStats stats) {
+  Widget _buildRadialProgress(
+    ChallengeIntelStats stats,
+    AppColorScheme colors,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.5)),
+        border: Border.all(color: colors.border.withOpacity(0.5)),
       ),
       child: Row(
         children: [
@@ -149,13 +164,13 @@ class _ChallengesView extends HookConsumerWidget {
                     sections: [
                       PieChartSectionData(
                         value: stats.overallCompletionRate * 100,
-                        color: AppColors.habitPrimary,
+                        color: colors.primary,
                         radius: 12,
                         showTitle: false,
                       ),
                       PieChartSectionData(
                         value: (1 - stats.overallCompletionRate) * 100,
-                        color: AppColors.habitBg,
+                        color: colors.progressBarBg,
                         radius: 10,
                         showTitle: false,
                       ),
@@ -168,15 +183,15 @@ class _ChallengesView extends HookConsumerWidget {
                     children: [
                       Text(
                         '${(stats.overallCompletionRate * 100).toInt()}%',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'TOTAL',
-                        style: TextStyle(color: Colors.grey, fontSize: 8),
+                        style: TextStyle(color: colors.textMuted, fontSize: 8),
                       ),
                     ],
                   ),
@@ -192,19 +207,22 @@ class _ChallengesView extends HookConsumerWidget {
                 _statRow(
                   'TOTAL',
                   stats.totalChallenges.toString(),
-                  Colors.white,
+                  colors.textPrimary,
+                  colors,
                 ),
                 const SizedBox(height: 12),
                 _statRow(
                   'COMPLETED',
                   stats.completedChallenges.toString(),
-                  AppColors.habitPrimary,
+                  colors.primary,
+                  colors,
                 ),
                 const SizedBox(height: 12),
                 _statRow(
                   'ONGOING',
                   stats.ongoingChallenges.toString(),
-                  Colors.blueAccent,
+                  colors.accent,
+                  colors,
                 ),
               ],
             ),
@@ -214,14 +232,19 @@ class _ChallengesView extends HookConsumerWidget {
     );
   }
 
-  Widget _statRow(String label, String value, Color valueColor) {
+  Widget _statRow(
+    String label,
+    String value,
+    Color valueColor,
+    AppColorScheme colors,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.grey,
+          style: TextStyle(
+            color: colors.textMuted,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -238,7 +261,10 @@ class _ChallengesView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildProgressChart(Map<DateTime, int> history) {
+  Widget _buildProgressChart(
+    Map<DateTime, int> history,
+    AppColorScheme colors,
+  ) {
     final sortedDates = history.keys.toList()..sort();
     final dataPoints = sortedDates.asMap().entries.map((e) {
       return FlSpot(e.key.toDouble(), history[e.value]!.toDouble());
@@ -248,7 +274,7 @@ class _ChallengesView extends HookConsumerWidget {
       height: 200,
       padding: const EdgeInsets.fromLTRB(10, 20, 20, 10),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: LineChart(
@@ -260,13 +286,13 @@ class _ChallengesView extends HookConsumerWidget {
             LineChartBarData(
               spots: dataPoints,
               isCurved: true,
-              color: AppColors.habitPrimary,
+              color: colors.primary,
               barWidth: 4,
               isStrokeCapRound: true,
               dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.habitPrimary.withOpacity(0.1),
+                color: colors.primary.withOpacity(0.1),
               ),
             ),
           ],
@@ -275,54 +301,125 @@ class _ChallengesView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildConsistencyInsight(ChallengeIntelStats stats) {
+  Widget _buildConsistencyInsight(
+    ChallengeIntelStats stats,
+    AppColorScheme colors,
+  ) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+    final daysInMonth = lastDayOfMonth.day;
+    final startingWeekday = firstDayOfMonth.weekday;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(7, (index) {
-        final date = today.subtract(Duration(days: 6 - index));
-        final completedCount = stats.completionHistory[date] ?? 0;
-        final isCompleted = completedCount > 0;
-
-        return Column(
-          children: [
-            Container(
-              width: 35,
-              height: 35,
-              decoration: BoxDecoration(
-                color: isCompleted
-                    ? AppColors.habitPrimary.withOpacity(0.1)
-                    : AppColors.highPriorityColor.withOpacity(0.05),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isCompleted
-                      ? AppColors.habitPrimary
-                      : AppColors.highPriorityColor.withOpacity(0.3),
-                  width: 2,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MMMM yyyy').format(now).toUpperCase(),
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  letterSpacing: 1.2,
                 ),
               ),
-              child: Icon(
-                isCompleted ? Icons.check : Icons.close,
-                size: 16,
-                color: isCompleted
-                    ? AppColors.habitPrimary
-                    : AppColors.highPriorityColor.withOpacity(0.5),
-              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          color: colors.textMuted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 10),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
             ),
-            const SizedBox(height: 8),
-            Text(
-              DateFormat('E').format(date)[0],
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        );
-      }),
+            itemCount: daysInMonth + (startingWeekday - 1),
+            itemBuilder: (context, index) {
+              if (index < startingWeekday - 1) {
+                return const SizedBox();
+              }
+              final day = index - (startingWeekday - 1) + 1;
+              final date = DateTime(now.year, now.month, day);
+              final count = stats.monthlyProgress[date] ?? 0;
+              final isToday =
+                  date.year == now.year &&
+                  date.month == now.month &&
+                  date.day == now.day;
+              final isFuture = date.isAfter(now);
+
+              Color bgColor = colors.progressBarBg;
+              Color textColor = colors.textMuted;
+
+              if (!isFuture) {
+                if (count > 0) {
+                  bgColor = colors.primary;
+                  textColor = Colors.white;
+                } else if (date.isBefore(
+                  DateTime(now.year, now.month, now.day),
+                )) {
+                  bgColor = AppColors.highPriorityColor.withOpacity(0.2);
+                  textColor = AppColors.highPriorityColor;
+                }
+              }
+
+              if (isToday) {
+                if (count == 0) {
+                  bgColor = colors.primary.withOpacity(0.2);
+                  textColor = colors.primary;
+                }
+              }
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: isToday
+                      ? Border.all(color: colors.primary, width: 1)
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$day',
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -333,21 +430,22 @@ class _HabitsView extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(habitStatsProvider);
+    final colors = Theme.of(context).appColors;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('HABIT COMPLETION OVERVIEW'),
-          // const SizedBox(height: 20),
+          _sectionHeader('HABIT COMPLETION OVERVIEW', colors),
           Row(
             children: [
               Expanded(
                 child: _miniStat(
                   'TOTAL',
                   stats.totalHabits.toString(),
-                  Colors.blueAccent,
+                  colors.accent,
+                  colors,
                 ),
               ),
               const SizedBox(width: 12),
@@ -355,7 +453,8 @@ class _HabitsView extends HookConsumerWidget {
                 child: _miniStat(
                   'DONE TODAY',
                   stats.completedToday.toString(),
-                  AppColors.habitPrimary,
+                  colors.primary,
+                  colors,
                 ),
               ),
               const SizedBox(width: 12),
@@ -364,29 +463,35 @@ class _HabitsView extends HookConsumerWidget {
                   'MISSED',
                   stats.missedToday.toString(),
                   AppColors.highPriorityColor,
+                  colors,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 40),
-          _sectionHeader('DAILY HABIT TREND'),
+          _sectionHeader('DAILY HABIT TREND', colors),
           const SizedBox(height: 20),
-          _buildWeeklyBarChart(stats.weeklyTrend),
+          _buildWeeklyBarChart(stats.weeklyTrend, colors),
           const SizedBox(height: 40),
-          _sectionHeader('HABIT-WISE PROGRESS'),
+          _sectionHeader('HABIT-WISE PROGRESS', colors),
           const SizedBox(height: 20),
-          ...stats.habitDetails.map((h) => _buildHabitProgress(h)),
+          ...stats.habitDetails.map((h) => _buildHabitProgress(h, colors)),
           const SizedBox(height: 100),
         ],
       ),
     );
   }
 
-  Widget _miniStat(String label, String value, Color color) {
+  Widget _miniStat(
+    String label,
+    String value,
+    Color color,
+    AppColorScheme colors,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
@@ -403,8 +508,8 @@ class _HabitsView extends HookConsumerWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.grey,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: 8,
               fontWeight: FontWeight.bold,
             ),
@@ -414,7 +519,10 @@ class _HabitsView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildWeeklyBarChart(Map<DateTime, int> weeklyTrend) {
+  Widget _buildWeeklyBarChart(
+    Map<DateTime, int> weeklyTrend,
+    AppColorScheme colors,
+  ) {
     final sortedDates = weeklyTrend.keys.toList()..sort();
     final barGroups = sortedDates.asMap().entries.map((e) {
       return BarChartGroupData(
@@ -422,7 +530,7 @@ class _HabitsView extends HookConsumerWidget {
         barRods: [
           BarChartRodData(
             toY: weeklyTrend[e.value]!.toDouble(),
-            color: AppColors.habitPrimary,
+            color: colors.primary,
             width: 16,
             borderRadius: BorderRadius.circular(4),
           ),
@@ -434,7 +542,7 @@ class _HabitsView extends HookConsumerWidget {
       height: 200,
       padding: const EdgeInsets.fromLTRB(10, 20, 20, 10),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
       ),
       child: BarChart(
@@ -457,7 +565,7 @@ class _HabitsView extends HookConsumerWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       DateFormat('E').format(date)[0],
-                      style: const TextStyle(color: Colors.grey, fontSize: 10),
+                      style: TextStyle(color: colors.textMuted, fontSize: 10),
                     ),
                   );
                 },
@@ -471,12 +579,12 @@ class _HabitsView extends HookConsumerWidget {
     );
   }
 
-  Widget _buildHabitProgress(HabitDetailStats detail) {
+  Widget _buildHabitProgress(HabitDetailStats detail, AppColorScheme colors) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -487,8 +595,8 @@ class _HabitsView extends HookConsumerWidget {
               children: [
                 Text(
                   detail.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -496,7 +604,7 @@ class _HabitsView extends HookConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   'SUCCESS RATE: ${(detail.completionRate * 100).toInt()}%',
-                  style: const TextStyle(color: Colors.grey, fontSize: 10),
+                  style: TextStyle(color: colors.textMuted, fontSize: 10),
                 ),
               ],
             ),
@@ -528,11 +636,11 @@ class _HabitsView extends HookConsumerWidget {
   }
 }
 
-Widget _sectionHeader(String title) {
+Widget _sectionHeader(String title, AppColorScheme colors) {
   return Text(
     title,
-    style: const TextStyle(
-      color: Colors.white70,
+    style: TextStyle(
+      color: colors.textSecondary,
       fontSize: 12,
       fontWeight: FontWeight.w900,
       letterSpacing: 1.5,

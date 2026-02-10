@@ -1,50 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
+import 'package:flutter/services.dart';
+import 'package:iron_mind/core/utils/colors.dart';
 
 class AppTheme {
-  AppTheme._(); // private constructor (no instances)
+  AppTheme._();
 
   /// 🌞 Light Theme
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
 
-    // 🎨 Primary Colors
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+      seedColor: AppColorScheme.light.primary,
       brightness: Brightness.light,
     ),
 
-    scaffoldBackgroundColor: AppColors.primary,
+    scaffoldBackgroundColor: AppColorScheme.light.bg,
 
-    // 📝 Text Theme
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,
-        color: AppColors.textPrimaryWhite,
+        color: AppColorScheme.light.textPrimary,
       ),
       titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        color: AppColors.textPrimaryWhite,
+        color: AppColorScheme.light.textPrimary,
       ),
-      bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimaryWhite),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        color: AppColorScheme.light.textPrimary,
+      ),
     ),
 
-    // 🔘 Buttons
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColorScheme.light.primary,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
 
-    // 📦 Card Theme
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    ),
+
     cardTheme: CardThemeData(
-      color: Colors.white,
-      elevation: 4,
+      color: AppColorScheme.light.cardBg,
+      elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
@@ -53,33 +61,49 @@ class AppTheme {
   static final ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.habitPrimary,
+      seedColor: AppColorScheme.dark.primary,
       brightness: Brightness.dark,
     ),
-    scaffoldBackgroundColor: AppColors.habitBg,
-    textTheme: const TextTheme(
+
+    scaffoldBackgroundColor: AppColorScheme.dark.bg,
+
+    textTheme: TextTheme(
       headlineLarge: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,
-        color: AppColors.textPrimaryWhite,
+        color: AppColorScheme.dark.textPrimary,
       ),
       titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        color: AppColors.textPrimaryWhite,
+        color: AppColorScheme.dark.textPrimary,
       ),
-      bodyMedium: TextStyle(fontSize: 14, color: AppColors.textPrimaryWhite),
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        color: AppColorScheme.dark.textPrimary,
+      ),
     ),
+
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.habitPrimary,
+        backgroundColor: AppColorScheme.dark.primary,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     ),
+
+    appBarTheme: const AppBarTheme(
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+    ),
+
     cardTheme: CardThemeData(
-      color: AppColors.habitSurface,
+      color: AppColorScheme.dark.cardBg,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),

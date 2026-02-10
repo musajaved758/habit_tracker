@@ -1,11 +1,11 @@
 {
-    "name": "operation_brotherhood",
-    "short_name": "operation_brotherhood",
+    "name": "iron_mind",
+    "short_name": "iron_mind",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "IronMind is a fitness app that helps you to track your workouts and progress.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

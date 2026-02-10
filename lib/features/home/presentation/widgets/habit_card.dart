@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
+import 'package:iron_mind/core/utils/colors.dart';
 
-import 'package:operation_brotherhood/core/providers/app_providers.dart';
+import 'package:iron_mind/core/providers/app_providers.dart';
 
 class HabitCard extends StatelessWidget {
   final bool isCompleted;
@@ -11,6 +11,8 @@ class HabitCard extends StatelessWidget {
   final String priority;
   final String motivationNote;
   final DateTime selectedDate;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const HabitCard({
     super.key,
@@ -22,10 +24,13 @@ class HabitCard extends StatelessWidget {
     required this.priority,
     required this.motivationNote,
     required this.selectedDate,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).appColors;
     final bool isFutureDate = isFuture(selectedDate);
 
     Color priorityColor;
@@ -45,9 +50,9 @@ class HabitCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: colors.cardBg,
           border: Border.all(
-            color: isCompleted ? AppColors.habitPrimary : AppColors.border,
+            color: isCompleted ? colors.primary : colors.border,
             width: isCompleted ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(18),
@@ -55,7 +60,7 @@ class HabitCard extends StatelessWidget {
         child: ListTile(
           onTap: () {
             if (motivationNote.isNotEmpty) {
-              _showMotivationDialog(context);
+              _showMotivationDialog(context, colors);
             }
           },
           leading: Transform.scale(
@@ -64,12 +69,12 @@ class HabitCard extends StatelessWidget {
               value: isCompleted,
               onChanged: isFutureDate ? null : onCompleteTap,
               shape: const CircleBorder(),
-              activeColor: AppColors.habitPrimary,
+              activeColor: colors.primary,
               checkColor: Colors.white,
               side: BorderSide(
                 color: isFutureDate
-                    ? Colors.grey.withOpacity(0.5)
-                    : AppColors.habitPrimary,
+                    ? colors.textMuted.withOpacity(0.5)
+                    : colors.primary,
               ),
             ),
           ),
@@ -79,7 +84,9 @@ class HabitCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: TextStyle(
-                    color: isCompleted ? Colors.white : Colors.white70,
+                    color: isCompleted
+                        ? colors.textPrimary
+                        : colors.textPrimary.withOpacity(0.8),
                     fontWeight: FontWeight.bold,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
                   ),
@@ -106,41 +113,90 @@ class HabitCard extends StatelessWidget {
           subtitle: Text(
             subTitle,
             style: TextStyle(
-              color: isCompleted ? AppColors.habitPrimary : Colors.grey,
+              color: isCompleted ? colors.primary : colors.textMuted,
               fontSize: 12,
             ),
           ),
-          trailing: Icon(
-            IconData(categoryIcon, fontFamily: 'MaterialIcons'),
-            color: Colors.white70,
-            size: 20,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                IconData(categoryIcon, fontFamily: 'MaterialIcons'),
+                color: colors.textSecondary,
+                size: 20,
+              ),
+              if (onEdit != null || onDelete != null) ...[
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert, color: colors.textSecondary),
+                  color: colors.surface,
+                  onSelected: (value) {
+                    if (value == 'edit' && onEdit != null) {
+                      onEdit!();
+                    } else if (value == 'delete' && onDelete != null) {
+                      onDelete!();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    if (onEdit != null)
+                      PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, color: colors.primary, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Edit',
+                              style: TextStyle(color: colors.textPrimary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete,
+                              color: AppColors.highPriorityColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Delete',
+                              style: TextStyle(color: colors.textPrimary),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _showMotivationDialog(BuildContext context) {
+  void _showMotivationDialog(BuildContext context, AppColorScheme colors) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: AppColors.habitSurface,
+        backgroundColor: colors.dialogBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.rocket_launch,
-                color: AppColors.habitPrimary,
-                size: 48,
-              ),
+              Icon(Icons.rocket_launch, color: colors.primary, size: 48),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "My Motivation",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -149,8 +205,8 @@ class HabitCard extends StatelessWidget {
               Text(
                 motivationNote,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white70,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
                 ),
@@ -159,7 +215,7 @@ class HabitCard extends StatelessWidget {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.habitPrimary,
+                  backgroundColor: colors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

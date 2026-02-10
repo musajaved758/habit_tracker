@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/core/utils/responsive.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/core/utils/responsive.dart';
+import 'package:iron_mind/core/providers/app_providers.dart';
 
-class CustomNavBar extends StatelessWidget {
+class CustomNavBar extends HookConsumerWidget {
   final int selectedIndex;
   final Function(int) onTap;
 
@@ -13,31 +15,44 @@ class CustomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSwapped = ref.watch(swapHomeAndChallengeProvider);
+    final colors = Theme.of(context).appColors;
+
     return Container(
       height: context.hp(10),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
-        border: const Border(top: BorderSide(color: AppColors.habitBorder)),
+        color: colors.navBar,
+        border: Border(top: BorderSide(color: colors.navBarBorder)),
       ),
       child: SafeArea(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(0, Icons.grid_view_rounded, 'HOME'),
-            _navItem(1, Icons.calendar_today_rounded, 'PHASES'),
-            _navItem(2, Icons.military_tech_rounded, 'MISSIONS'),
-            _navItem(3, Icons.show_chart_rounded, 'PROGRESS'),
-            _navItem(4, Icons.settings_rounded, 'SETTINGS'),
+            if (isSwapped) ...[
+              _navItem(0, Icons.military_tech_rounded, 'CHALLENGES', colors),
+              _navItem(1, Icons.grid_view_rounded, 'HABIT', colors),
+            ] else ...[
+              _navItem(0, Icons.grid_view_rounded, 'HABIT', colors),
+              _navItem(1, Icons.military_tech_rounded, 'CHALLENGES', colors),
+            ],
+            _navItem(2, Icons.calendar_today_rounded, 'PHASES', colors),
+            _navItem(3, Icons.show_chart_rounded, 'PROGRESS', colors),
+            _navItem(4, Icons.settings_rounded, 'SETTINGS', colors),
           ],
         ),
       ),
     );
   }
 
-  Widget _navItem(int index, IconData icon, String label) {
+  Widget _navItem(
+    int index,
+    IconData icon,
+    String label,
+    AppColorScheme colors,
+  ) {
     final isSelected = selectedIndex == index;
-    final color = isSelected ? AppColors.habitPrimary : Colors.grey;
+    final color = isSelected ? colors.iconActive : colors.iconInactive;
 
     return InkWell(
       onTap: () => onTap(index),

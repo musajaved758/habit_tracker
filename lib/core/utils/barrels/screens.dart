@@ -1,5 +1,5 @@
-export 'package:operation_brotherhood/features/habit/habit_screen.dart';
-export 'package:operation_brotherhood/features/home/presentation/screens/home_screen.dart';
-export 'package:operation_brotherhood/features/phases/phase_screen.dart';
-export 'package:operation_brotherhood/features/intel/presentation/screens/intel_screen.dart';
-export 'package:operation_brotherhood/features/setting/setting_screen.dart';
+export 'package:iron_mind/features/habit/habit_screen.dart';
+export 'package:iron_mind/features/home/presentation/screens/home_screen.dart';
+export 'package:iron_mind/features/phases/phase_screen.dart';
+export 'package:iron_mind/features/intel/presentation/screens/intel_screen.dart';
+export 'package:iron_mind/features/setting/setting_screen.dart';

@@ -1,8 +1,8 @@
 import 'package:easy_date_timeline/easy_date_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/features/habit/presentation/providers/habit_provider.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/features/habit/presentation/providers/habit_provider.dart';
 
 class TimeLineWidget extends HookConsumerWidget {
   final DateTime selectedDate;

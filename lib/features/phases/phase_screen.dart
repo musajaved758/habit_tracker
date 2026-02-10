@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/features/challenge/presentation/providers/challenge_provider.dart';
-import 'package:operation_brotherhood/features/challenge/data/models/challenge_model.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/features/challenge/presentation/providers/challenge_provider.dart';
+import 'package:iron_mind/features/challenge/data/models/challenge_model.dart';
 
 class PhaseScreen extends HookConsumerWidget {
   const PhaseScreen({super.key});
 
-  // Color palette for different operations
   static const List<Color> operationColors = [
-    Color(0xFF6366F1), // Indigo
-    Color(0xFFEC4899), // Pink
-    Color(0xFF10B981), // Emerald
-    Color(0xFFF59E0B), // Amber
-    Color(0xFF8B5CF6), // Purple
+    Color(0xFF6366F1),
+    Color(0xFFEC4899),
+    Color(0xFF10B981),
+    Color(0xFFF59E0B),
+    Color(0xFF8B5CF6),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final challenges = ref.watch(challengeProvider);
+    final colors = Theme.of(context).appColors;
 
     return Scaffold(
-      backgroundColor: AppColors.habitBg,
+      backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'PHASES',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
             fontSize: 20,
@@ -38,20 +38,26 @@ class PhaseScreen extends HookConsumerWidget {
         automaticallyImplyLeading: false,
       ),
       body: challenges.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(colors)
           : ListView.separated(
               padding: const EdgeInsets.all(20),
               itemCount: challenges.length,
               separatorBuilder: (context, index) => const SizedBox(height: 40),
               itemBuilder: (context, index) {
                 final color = operationColors[index % operationColors.length];
-                return _buildRoadmap(challenges[index], context, ref, color);
+                return _buildRoadmap(
+                  challenges[index],
+                  context,
+                  ref,
+                  color,
+                  colors,
+                );
               },
             ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppColorScheme colors) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -59,13 +65,13 @@ class PhaseScreen extends HookConsumerWidget {
           Icon(
             Icons.lock_clock,
             size: 64,
-            color: Colors.white.withOpacity(0.2),
+            color: colors.textMuted.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'NO ENGAGEMENT DETECTED',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: colors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -81,6 +87,7 @@ class PhaseScreen extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     Color accentColor,
+    AppColorScheme colors,
   ) {
     final roadmap = challenge.roadmap;
     if (roadmap.isEmpty) return const SizedBox.shrink();
@@ -108,9 +115,6 @@ class PhaseScreen extends HookConsumerWidget {
             final milestone = roadmap[index];
             final isLast = index == roadmap.length - 1;
 
-            // Locking Logic:
-            // Index 0 is always unlocked.
-            // Index N is unlocked if Index N-1 is completed.
             bool isLocked = false;
             if (index > 0) {
               final previousMilestone = roadmap[index - 1];
@@ -128,6 +132,7 @@ class PhaseScreen extends HookConsumerWidget {
               ref,
               context,
               accentColor,
+              colors,
             );
           },
         ),
@@ -144,12 +149,11 @@ class PhaseScreen extends HookConsumerWidget {
     WidgetRef ref,
     BuildContext context,
     Color accentColor,
+    AppColorScheme colors,
   ) {
-    Color primaryColor = isLocked ? Colors.grey : accentColor;
-    Color bgColor = isLocked
-        ? Colors.white.withOpacity(0.05)
-        : AppColors.habitSurface;
-    Color textColor = isLocked ? Colors.white38 : Colors.white;
+    Color primaryColor = isLocked ? colors.textMuted : accentColor;
+    Color bgColor = isLocked ? colors.chipBg.withOpacity(0.5) : colors.surface;
+    Color textColor = isLocked ? colors.textMuted : colors.textPrimary;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +164,7 @@ class PhaseScreen extends HookConsumerWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: milestone.isCompleted ? primaryColor : AppColors.habitBg,
+                color: milestone.isCompleted ? primaryColor : colors.bg,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: primaryColor.withOpacity(isLocked ? 0.3 : 1.0),
@@ -178,7 +182,7 @@ class PhaseScreen extends HookConsumerWidget {
               ),
               child: Center(
                 child: isLocked
-                    ? const Icon(Icons.lock, color: Colors.grey, size: 14)
+                    ? Icon(Icons.lock, color: colors.textMuted, size: 14)
                     : (milestone.isCompleted
                           ? const Icon(
                               Icons.check,
@@ -198,10 +202,10 @@ class PhaseScreen extends HookConsumerWidget {
             if (!isLast)
               Container(
                 width: 2,
-                height: 200, // Fixed height for vertical line
+                height: 200,
                 color: isLocked
-                    ? Colors.white10
-                    : AppColors.habitBorder.withOpacity(0.3),
+                    ? colors.divider.withOpacity(0.2)
+                    : colors.border.withOpacity(0.3),
               ),
           ],
         ),
@@ -216,8 +220,8 @@ class PhaseScreen extends HookConsumerWidget {
                 color: milestone.isCompleted
                     ? primaryColor.withOpacity(0.3)
                     : (isLocked
-                          ? Colors.white10
-                          : AppColors.habitBorder.withOpacity(0.5)),
+                          ? colors.divider.withOpacity(0.2)
+                          : colors.border.withOpacity(0.5)),
               ),
             ),
             clipBehavior: Clip.antiAlias,
@@ -227,14 +231,14 @@ class PhaseScreen extends HookConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 100, // Reduced height
+                    height: 100,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
                           bgColor,
                           isLocked
-                              ? Colors.black12
+                              ? colors.bg.withOpacity(0.5)
                               : primaryColor.withOpacity(0.1),
                         ],
                         begin: Alignment.topLeft,
@@ -244,10 +248,10 @@ class PhaseScreen extends HookConsumerWidget {
                     child: Stack(
                       children: [
                         if (isLocked)
-                          const Center(
+                          Center(
                             child: Icon(
                               Icons.lock_outline,
-                              color: Colors.white10,
+                              color: colors.textMuted.withOpacity(0.15),
                               size: 48,
                             ),
                           ),
@@ -261,12 +265,12 @@ class PhaseScreen extends HookConsumerWidget {
                             ),
                             decoration: BoxDecoration(
                               color: milestone.isCompleted
-                                  ? Colors.white12
+                                  ? colors.chipBg
                                   : primaryColor,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              (isLocked)
+                              isLocked
                                   ? 'LOCKED'
                                   : (milestone.isCompleted
                                         ? 'COMPLETED'
@@ -302,7 +306,9 @@ class PhaseScreen extends HookConsumerWidget {
                         Text(
                           milestone.description,
                           style: TextStyle(
-                            color: isLocked ? Colors.white30 : Colors.white70,
+                            color: isLocked
+                                ? colors.textMuted.withOpacity(0.5)
+                                : colors.textSecondary,
                             fontSize: 12,
                             height: 1.4,
                           ),
@@ -312,14 +318,14 @@ class PhaseScreen extends HookConsumerWidget {
                           children: [
                             Icon(
                               Icons.calendar_today,
-                              color: isLocked ? Colors.white24 : Colors.grey,
+                              color: colors.textMuted,
                               size: 14,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '${milestone.durationDays} Days',
                               style: TextStyle(
-                                color: isLocked ? Colors.white24 : Colors.grey,
+                                color: colors.textMuted,
                                 fontSize: 12,
                               ),
                             ),
@@ -327,16 +333,6 @@ class PhaseScreen extends HookConsumerWidget {
                             if (!isLocked)
                               ElevatedButton(
                                 onPressed: () {
-                                  if (isLocked) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Complete previous phase to unlock!',
-                                        ),
-                                      ),
-                                    );
-                                    return;
-                                  }
                                   ref
                                       .read(challengeProvider.notifier)
                                       .toggleMilestoneCompletion(
@@ -346,7 +342,7 @@ class PhaseScreen extends HookConsumerWidget {
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: milestone.isCompleted
-                                      ? Colors.white10
+                                      ? colors.chipBg
                                       : primaryColor,
                                   elevation: 0,
                                   shape: RoundedRectangleBorder(
@@ -370,7 +366,7 @@ class PhaseScreen extends HookConsumerWidget {
                         ),
                         if (milestone.subtasks.isNotEmpty) ...[
                           const SizedBox(height: 16),
-                          const Divider(color: Colors.white10),
+                          Divider(color: colors.divider.withOpacity(0.3)),
                           const SizedBox(height: 8),
                           Text(
                             'WEEKLY OBJECTIVES',
@@ -408,8 +404,8 @@ class PhaseScreen extends HookConsumerWidget {
                                       checkColor: Colors.white,
                                       side: BorderSide(
                                         color: isLocked
-                                            ? Colors.white30
-                                            : Colors.white70,
+                                            ? colors.textMuted.withOpacity(0.5)
+                                            : colors.textSecondary,
                                       ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(4),
@@ -422,10 +418,10 @@ class PhaseScreen extends HookConsumerWidget {
                                       s.title,
                                       style: TextStyle(
                                         color: isLocked
-                                            ? Colors.white30
+                                            ? colors.textMuted.withOpacity(0.5)
                                             : (s.isCompleted
-                                                  ? Colors.white38
-                                                  : Colors.white70),
+                                                  ? colors.textMuted
+                                                  : colors.textSecondary),
                                         fontSize: 12,
                                         decoration: s.isCompleted
                                             ? TextDecoration.lineThrough

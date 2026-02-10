@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:operation_brotherhood/features/habit/presentation/providers/habit_provider.dart';
-import 'package:operation_brotherhood/features/challenge/presentation/providers/challenge_provider.dart';
-import 'package:operation_brotherhood/features/challenge/data/models/challenge_model.dart';
+import 'package:iron_mind/features/habit/presentation/providers/habit_provider.dart';
+import 'package:iron_mind/features/challenge/presentation/providers/challenge_provider.dart';
+import 'package:iron_mind/features/challenge/data/models/challenge_model.dart';
 
 class ChallengeIntelStats {
   final int totalChallenges;
@@ -10,6 +11,8 @@ class ChallengeIntelStats {
   final double overallCompletionRate;
   final Map<DateTime, int>
   completionHistory; // Date -> count of challenges completed that day
+  final Map<DateTime, int>
+  monthlyProgress; // Date -> count of challenges completed
   final List<ChallengeModel> activeChallenges;
 
   ChallengeIntelStats({
@@ -18,6 +21,7 @@ class ChallengeIntelStats {
     required this.ongoingChallenges,
     required this.overallCompletionRate,
     required this.completionHistory,
+    required this.monthlyProgress,
     required this.activeChallenges,
   });
 }
@@ -82,6 +86,20 @@ final challengeStatsProvider = Provider<ChallengeIntelStats>((ref) {
     history[date] = count;
   }
 
+  // Monthly Progress (Current Month)
+  final Map<DateTime, int> monthlyProgress = {};
+  final startOfMonth = DateTime(now.year, now.month, 1);
+  final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
+
+  for (int i = 0; i < daysInMonth; i++) {
+    final date = startOfMonth.add(Duration(days: i));
+    int count = 0;
+    for (final c in challenges) {
+      if (c.isCompletedOn(date)) count++;
+    }
+    monthlyProgress[date] = count;
+  }
+
   double totalProgress = 0;
   if (challenges.isNotEmpty) {
     for (final c in challenges) {
@@ -97,6 +115,7 @@ final challengeStatsProvider = Provider<ChallengeIntelStats>((ref) {
         ? 0
         : totalProgress / challenges.length,
     completionHistory: history,
+    monthlyProgress: monthlyProgress,
     activeChallenges: ongoing,
   );
 });

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/core/providers/theme_provider.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/core/providers/theme_provider.dart';
+import 'package:iron_mind/core/providers/app_providers.dart';
 
 class SettingScreen extends HookConsumerWidget {
   const SettingScreen({super.key});
@@ -9,16 +10,17 @@ class SettingScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTheme = ref.watch(themeModeProvider);
+    final colors = Theme.of(context).appColors;
 
     return Scaffold(
-      backgroundColor: AppColors.habitBg,
+      backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'SETTINGS',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
             fontSize: 20,
@@ -30,27 +32,69 @@ class SettingScreen extends HookConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _sectionHeader('APPEARANCE'),
+          _sectionHeader('APPEARANCE', colors),
           const SizedBox(height: 16),
-          _buildThemeSelector(context, ref, currentTheme),
+          _buildThemeSelector(context, ref, currentTheme, colors),
           const SizedBox(height: 40),
-          _sectionHeader('ABOUT'),
+          _sectionHeader('PREFERENCES', colors),
           const SizedBox(height: 16),
-          _buildInfoCard('Version', '1.0.0', Icons.info_outline),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colors.border.withOpacity(0.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.swap_horiz, color: colors.textSecondary),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Swap Challenges & Habit',
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                Switch(
+                  value: ref.watch(swapHomeAndChallengeProvider),
+                  onChanged: (val) {
+                    ref.read(swapHomeAndChallengeProvider.notifier).state = val;
+                  },
+                  activeColor: colors.primary,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 40),
+          _sectionHeader('ABOUT', colors),
+          const SizedBox(height: 16),
+          _buildInfoCard('Version', '1.0.0', Icons.info_outline, colors),
           const SizedBox(height: 12),
-          _buildInfoCard('Developer', 'Operation Brotherhood', Icons.code),
+          _buildInfoCard(
+            'Developer',
+            'Operation Brotherhood',
+            Icons.code,
+            colors,
+          ),
         ],
       ),
     );
   }
 
-  Widget _sectionHeader(String title) {
+  Widget _sectionHeader(String title, AppColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Text(
         title,
         style: TextStyle(
-          color: AppColors.habitIconGrey,
+          color: colors.textMuted,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -63,12 +107,13 @@ class SettingScreen extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ThemeMode currentTheme,
+    AppColorScheme colors,
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.5)),
+        border: Border.all(color: colors.border.withOpacity(0.5)),
       ),
       child: Column(
         children: [
@@ -79,9 +124,10 @@ class SettingScreen extends HookConsumerWidget {
             Icons.light_mode,
             ThemeMode.light,
             currentTheme == ThemeMode.light,
+            colors,
           ),
           Divider(
-            color: AppColors.habitBorder.withOpacity(0.3),
+            color: colors.divider.withOpacity(0.3),
             height: 1,
             indent: 16,
             endIndent: 16,
@@ -93,9 +139,10 @@ class SettingScreen extends HookConsumerWidget {
             Icons.dark_mode,
             ThemeMode.dark,
             currentTheme == ThemeMode.dark,
+            colors,
           ),
           Divider(
-            color: AppColors.habitBorder.withOpacity(0.3),
+            color: colors.divider.withOpacity(0.3),
             height: 1,
             indent: 16,
             endIndent: 16,
@@ -107,6 +154,7 @@ class SettingScreen extends HookConsumerWidget {
             Icons.settings_suggest,
             ThemeMode.system,
             currentTheme == ThemeMode.system,
+            colors,
           ),
         ],
       ),
@@ -120,6 +168,7 @@ class SettingScreen extends HookConsumerWidget {
     IconData icon,
     ThemeMode mode,
     bool isSelected,
+    AppColorScheme colors,
   ) {
     return InkWell(
       onTap: () {
@@ -134,13 +183,13 @@ class SettingScreen extends HookConsumerWidget {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.habitPrimary.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.05),
+                    ? colors.primary.withOpacity(0.1)
+                    : colors.chipBg,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 icon,
-                color: isSelected ? AppColors.habitPrimary : Colors.white70,
+                color: isSelected ? colors.primary : colors.textSecondary,
                 size: 24,
               ),
             ),
@@ -149,25 +198,21 @@ class SettingScreen extends HookConsumerWidget {
               child: Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.white70,
+                  color: isSelected ? colors.textPrimary : colors.textSecondary,
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
             if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: AppColors.habitPrimary,
-                size: 24,
-              )
+              Icon(Icons.check_circle, color: colors.primary, size: 24)
             else
               Container(
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 2),
+                  border: Border.all(color: colors.border, width: 2),
                 ),
               ),
           ],
@@ -176,23 +221,28 @@ class SettingScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildInfoCard(String label, String value, IconData icon) {
+  Widget _buildInfoCard(
+    String label,
+    String value,
+    IconData icon,
+    AppColorScheme colors,
+  ) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.5)),
+        border: Border.all(color: colors.border.withOpacity(0.5)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: colors.chipBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.white70, size: 24),
+            child: Icon(icon, color: colors.textSecondary, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -201,8 +251,8 @@ class SettingScreen extends HookConsumerWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white54,
+                  style: TextStyle(
+                    color: colors.textMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -210,8 +260,8 @@ class SettingScreen extends HookConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),

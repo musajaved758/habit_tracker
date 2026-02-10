@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/core/utils/responsive.dart';
-import 'package:operation_brotherhood/features/habit/presentation/providers/habit_provider.dart';
-import 'package:operation_brotherhood/features/challenge/presentation/providers/challenge_provider.dart';
-import 'package:operation_brotherhood/features/challenge/data/models/challenge_model.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/core/utils/responsive.dart';
+import 'package:iron_mind/features/habit/presentation/providers/habit_provider.dart';
+import 'package:iron_mind/features/challenge/presentation/providers/challenge_provider.dart';
+import 'package:iron_mind/features/challenge/data/models/challenge_model.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:iron_mind/features/habit/data/models/habit_model.dart';
 
 class HabitScreen extends HookConsumerWidget {
   final ChallengeModel? challengeToEdit;
+  final HabitModel? habitToEdit;
 
-  const HabitScreen({super.key, this.challengeToEdit});
+  const HabitScreen({super.key, this.challengeToEdit, this.habitToEdit});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,6 +27,7 @@ class HabitScreen extends HookConsumerWidget {
     final targetUnit = useState('TIMES');
     final endDate = useState(DateTime.now().add(const Duration(days: 30)));
     final priority = useState('MEDIUM');
+    final colors = Theme.of(context).appColors;
 
     final categories = useState([
       {'name': 'Fitness', 'icon': Icons.fitness_center},
@@ -48,15 +52,14 @@ class HabitScreen extends HookConsumerWidget {
       );
     }
 
-    // Challenge Hooks with defaults for mandatory punishment
     final chNameController = useTextEditingController();
     final chDurationController = useTextEditingController(text: '30');
-    final threatLevel = useState('HARD'); // Default: HARD (mandatory)
-    final chConsequenceType = useState('PHYSICAL'); // Default: PHYSICAL
-    final specificConsequence = useState('COLD SHOWER'); // Default consequence
+    final threatLevel = useState('HARD');
+    final chConsequenceType = useState('PHYSICAL');
+    final specificConsequence = useState('COLD SHOWER');
     final roadmap = useState<List<ChallengeMilestone>>([]);
 
-    final creationMode = useState('HABIT'); // 'HABIT' or 'CHALLENGE'
+    final creationMode = useState('HABIT');
 
     useEffect(() {
       if (challengeToEdit != null) {
@@ -67,6 +70,17 @@ class HabitScreen extends HookConsumerWidget {
         chConsequenceType.value = challengeToEdit!.consequenceType;
         specificConsequence.value = challengeToEdit!.specificConsequence;
         roadmap.value = challengeToEdit!.roadmap;
+      } else if (habitToEdit != null) {
+        creationMode.value = 'HABIT';
+        nameController.text = habitToEdit!.name;
+        selectedCategory.value = habitToEdit!.category;
+        selectedIcon.value = habitToEdit!.categoryIcon;
+        selectedFrequency.value = habitToEdit!.frequency;
+        targetValue.value = habitToEdit!.targetValue;
+        targetUnit.value = habitToEdit!.targetUnit;
+        endDate.value = habitToEdit!.endDate;
+        priority.value = habitToEdit!.priority;
+        noteController.text = habitToEdit!.motivationNote;
       }
       return null;
     }, []);
@@ -79,26 +93,44 @@ class HabitScreen extends HookConsumerWidget {
         return;
       }
 
-      ref
-          .read(habitProvider.notifier)
-          .addHabit(
-            name: nameController.text,
-            category: selectedCategory.value,
-            categoryIcon: selectedIcon.value,
-            frequency: selectedFrequency.value,
-            targetValue: targetValue.value,
-            targetUnit: targetUnit.value,
-            reminderTime:
-                null, // As per new requirement to replace reminder with date setter
-            priority: priority.value,
-            motivationNote: noteController.text,
-            endDate: endDate.value,
-          );
+      if (habitToEdit != null) {
+        ref
+            .read(habitProvider.notifier)
+            .updateHabit(
+              id: habitToEdit!.id,
+              name: nameController.text,
+              category: selectedCategory.value,
+              categoryIcon: selectedIcon.value,
+              frequency: selectedFrequency.value,
+              targetValue: targetValue.value,
+              targetUnit: targetUnit.value,
+              reminderTime: null,
+              priority: priority.value,
+              motivationNote: noteController.text,
+              endDate: endDate.value,
+              createdAt: habitToEdit!.createdAt,
+              completedDates: habitToEdit!.completedDates,
+            );
+      } else {
+        ref
+            .read(habitProvider.notifier)
+            .addHabit(
+              name: nameController.text,
+              category: selectedCategory.value,
+              categoryIcon: selectedIcon.value,
+              frequency: selectedFrequency.value,
+              targetValue: targetValue.value,
+              targetUnit: targetUnit.value,
+              reminderTime: null,
+              priority: priority.value,
+              motivationNote: noteController.text,
+              endDate: endDate.value,
+            );
+      }
 
       Navigator.pop(context);
     }
 
-    // Challenge limit logic
     final challenges = ref.watch(challengeProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -113,8 +145,6 @@ class HabitScreen extends HookConsumerWidget {
 
     final isChallengeLimitReached = activeChallengesCount >= 5;
 
-    // Reset mode to HABIT if challenge was selected but limit reached (e.g. after adding one)
-    // ONLY if we are NOT editing
     if (challengeToEdit == null &&
         isChallengeLimitReached &&
         creationMode.value == 'CHALLENGE') {
@@ -124,18 +154,20 @@ class HabitScreen extends HookConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.habitBg,
+      backgroundColor: colors.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.habitBg,
+        backgroundColor: colors.bg,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: colors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          challengeToEdit != null ? 'Edit Mission' : 'Create New',
-          style: const TextStyle(
-            color: Colors.white,
+          challengeToEdit != null
+              ? 'Edit Mission'
+              : (habitToEdit != null ? 'Edit Habit' : 'Create New'),
+          style: TextStyle(
+            color: colors.textPrimary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -153,7 +185,7 @@ class HabitScreen extends HookConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppColors.habitSurface,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -163,6 +195,7 @@ class HabitScreen extends HookConsumerWidget {
                         'HABIT',
                         creationMode.value == 'HABIT',
                         () => creationMode.value = 'HABIT',
+                        colors,
                       ),
                     ),
                     if (!isChallengeLimitReached)
@@ -171,6 +204,7 @@ class HabitScreen extends HookConsumerWidget {
                           'CHALLENGE',
                           creationMode.value == 'CHALLENGE',
                           () => creationMode.value = 'CHALLENGE',
+                          colors,
                         ),
                       ),
                   ],
@@ -180,19 +214,18 @@ class HabitScreen extends HookConsumerWidget {
             ],
 
             if (creationMode.value == 'HABIT') ...[
-              // HABIT IDENTITY
-              _sectionHeader('HABIT IDENTITY'),
+              _sectionHeader('HABIT IDENTITY', colors),
               _customTextField(
                 controller: nameController,
                 hintText: 'e.g. Morning Meditation',
                 label: 'Habit Name',
                 maxLength: 30,
+                colors: colors,
               ),
 
               SizedBox(height: context.h(3)),
 
-              // CATEGORY
-              _sectionHeader('CATEGORY'),
+              _sectionHeader('CATEGORY', colors),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -208,6 +241,7 @@ class HabitScreen extends HookConsumerWidget {
                           selectedIcon.value =
                               (cat['icon'] as IconData).codePoint;
                         },
+                        colors,
                       ),
                     ),
                     _categoryChip(
@@ -216,6 +250,7 @@ class HabitScreen extends HookConsumerWidget {
                       Icons.add,
                       false,
                       _showCustomCategoryDialog,
+                      colors,
                     ),
                   ],
                 ),
@@ -223,7 +258,6 @@ class HabitScreen extends HookConsumerWidget {
 
               SizedBox(height: context.h(3)),
 
-              // FREQUENCY & GOAL
               Row(
                 children: [
                   Expanded(
@@ -231,11 +265,12 @@ class HabitScreen extends HookConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _sectionHeader('FREQUENCY'),
+                        _sectionHeader('FREQUENCY', colors),
                         _frequencyToggle(
                           context,
                           selectedFrequency.value,
                           (val) => selectedFrequency.value = val,
+                          colors,
                         ),
                       ],
                     ),
@@ -246,12 +281,13 @@ class HabitScreen extends HookConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _sectionHeader('GOAL/TARGET'),
+                        _sectionHeader('GOAL/TARGET', colors),
                         _goalInput(
                           context,
                           targetValue.value,
                           targetUnit.value,
                           (val) => targetValue.value = val,
+                          colors,
                         ),
                       ],
                     ),
@@ -261,34 +297,32 @@ class HabitScreen extends HookConsumerWidget {
 
               SizedBox(height: context.h(3)),
 
-              // END DATE SETTER
-              _sectionHeader('HABIT DURATION'),
+              _sectionHeader('HABIT DURATION', colors),
               _endDateSetter(
                 context,
                 endDate.value,
                 (val) => endDate.value = val,
+                colors,
               ),
 
               SizedBox(height: context.h(3)),
 
-              // PRIORITY LEVEL
-              _sectionHeader('PRIORITY LEVEL'),
+              _sectionHeader('PRIORITY LEVEL', colors),
               _prioritySelector(
                 context,
                 priority.value,
                 (val) => priority.value = val,
+                colors,
               ),
 
               SizedBox(height: context.h(3)),
 
-              // MOTIVATION NOTE
-              _sectionHeader('MOTIVATION NOTE'),
-              _motivationField(noteController),
+              _sectionHeader('MOTIVATION NOTE', colors),
+              _motivationField(noteController, colors),
 
               SizedBox(height: context.h(4)),
 
-              // CREATE HABIT BUTTON
-              _createHabitButton(context, handleCreateHabit),
+              _createHabitButton(context, handleCreateHabit, colors),
 
               SizedBox(height: context.h(5)),
             ] else ...[
@@ -311,6 +345,7 @@ class HabitScreen extends HookConsumerWidget {
                   specificConsequence,
                   roadmap.value,
                 ),
+                colors,
               ),
             ],
           ],
@@ -319,13 +354,13 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _sectionHeader(String title) {
+  Widget _sectionHeader(String title, AppColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Text(
         title,
         style: TextStyle(
-          color: AppColors.habitIconGrey,
+          color: colors.textMuted,
           fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.2,
@@ -339,13 +374,14 @@ class HabitScreen extends HookConsumerWidget {
     required String hintText,
     required String label,
     required int maxLength,
+    required AppColorScheme colors,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.5)),
+        border: Border.all(color: colors.border.withOpacity(0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,20 +391,23 @@ class HabitScreen extends HookConsumerWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: colors.textSecondary, fontSize: 13),
               ),
               Text(
                 '0/$maxLength',
-                style: const TextStyle(color: Colors.white30, fontSize: 10),
+                style: TextStyle(color: colors.textMuted, fontSize: 10),
               ),
             ],
           ),
           TextField(
             controller: controller,
-            style: const TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(color: colors.textPrimary, fontSize: 18),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: const TextStyle(color: Colors.white24, fontSize: 18),
+              hintStyle: TextStyle(
+                color: colors.textMuted.withOpacity(0.4),
+                fontSize: 18,
+              ),
               border: InputBorder.none,
               isDense: true,
               contentPadding: const EdgeInsets.only(top: 8),
@@ -385,6 +424,7 @@ class HabitScreen extends HookConsumerWidget {
     IconData icon,
     bool isSelected,
     VoidCallback onTap,
+    AppColorScheme colors,
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -393,19 +433,17 @@ class HabitScreen extends HookConsumerWidget {
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.habitCategoryBlue
-              : AppColors.habitSurface,
+          color: isSelected ? colors.primary : colors.surface,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
             color: isSelected
                 ? Colors.transparent
-                : AppColors.habitBorder.withOpacity(0.3),
+                : colors.border.withOpacity(0.3),
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.habitPrimary.withOpacity(0.4),
+                    color: colors.primary.withOpacity(0.4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
@@ -416,14 +454,14 @@ class HabitScreen extends HookConsumerWidget {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.habitIconGrey,
+              color: isSelected ? Colors.white : colors.textMuted,
               size: 16,
             ),
             const SizedBox(width: 8),
             Text(
               name,
               style: TextStyle(
-                color: isSelected ? Colors.white : AppColors.habitIconGrey,
+                color: isSelected ? Colors.white : colors.textMuted,
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
               ),
@@ -438,11 +476,12 @@ class HabitScreen extends HookConsumerWidget {
     BuildContext context,
     String selected,
     Function(String) onSelect,
+    AppColorScheme colors,
   ) {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -454,14 +493,14 @@ class HabitScreen extends HookConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSel ? AppColors.habitPrimary : Colors.transparent,
+                  color: isSel ? colors.primary : Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   freq,
                   style: TextStyle(
-                    color: isSel ? Colors.white : AppColors.habitIconGrey,
+                    color: isSel ? Colors.white : colors.textMuted,
                     fontSize: 12,
                     fontWeight: isSel ? FontWeight.bold : FontWeight.w500,
                   ),
@@ -479,20 +518,21 @@ class HabitScreen extends HookConsumerWidget {
     int value,
     String unit,
     Function(int) onValueChange,
+    AppColorScheme colors,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.3)),
+        border: Border.all(color: colors.border.withOpacity(0.3)),
       ),
       child: Row(
         children: [
           Text(
             '$value',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),
@@ -501,22 +541,18 @@ class HabitScreen extends HookConsumerWidget {
           Container(
             height: 24,
             width: 1,
-            color: Colors.white12,
+            color: colors.divider,
             margin: const EdgeInsets.symmetric(horizontal: 8),
           ),
           Text(
             unit,
-            style: const TextStyle(
-              color: AppColors.habitIconGrey,
+            style: TextStyle(
+              color: colors.textMuted,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const Icon(
-            Icons.keyboard_arrow_down,
-            color: AppColors.habitIconGrey,
-            size: 16,
-          ),
+          Icon(Icons.keyboard_arrow_down, color: colors.textMuted, size: 16),
         ],
       ),
     );
@@ -526,13 +562,14 @@ class HabitScreen extends HookConsumerWidget {
     BuildContext context,
     DateTime selectedDate,
     Function(DateTime) onDateChange,
+    AppColorScheme colors,
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.3)),
+        border: Border.all(color: colors.border.withOpacity(0.3)),
       ),
       child: Column(
         children: [
@@ -541,12 +578,12 @@ class HabitScreen extends HookConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.habitPrimary.withOpacity(0.1),
+                  color: colors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_today,
-                  color: AppColors.habitPrimary,
+                  color: colors.primary,
                   size: 24,
                 ),
               ),
@@ -554,10 +591,10 @@ class HabitScreen extends HookConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'End Date',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                     ),
@@ -565,7 +602,7 @@ class HabitScreen extends HookConsumerWidget {
                   Text(
                     'HABIT DURATION RANGE',
                     style: TextStyle(
-                      color: AppColors.habitIconGrey,
+                      color: colors.textMuted,
                       fontSize: 10,
                       letterSpacing: 0.5,
                     ),
@@ -595,8 +632,8 @@ class HabitScreen extends HookConsumerWidget {
                       "${date.day} ${_getMonth(date.month)} ${date.year}",
                       style: TextStyle(
                         color: isSelected
-                            ? AppColors.habitPrimary
-                            : Colors.white24,
+                            ? colors.primary
+                            : colors.textMuted.withOpacity(0.4),
                         fontSize: isSelected ? 24 : 18,
                         fontWeight: isSelected
                             ? FontWeight.bold
@@ -605,7 +642,7 @@ class HabitScreen extends HookConsumerWidget {
                     ),
                   );
                 },
-                childCount: 365, // Max 1 year for now
+                childCount: 365,
               ),
             ),
           ),
@@ -636,6 +673,7 @@ class HabitScreen extends HookConsumerWidget {
     BuildContext context,
     String selected,
     Function(String) onSelect,
+    AppColorScheme colors,
   ) {
     return Row(
       children: [
@@ -645,6 +683,7 @@ class HabitScreen extends HookConsumerWidget {
             AppColors.lowPriorityColor,
             selected == 'LOW',
             () => onSelect('LOW'),
+            colors,
           ),
         ),
         const SizedBox(width: 10),
@@ -654,6 +693,7 @@ class HabitScreen extends HookConsumerWidget {
             AppColors.mediumPriorityColor,
             selected == 'MEDIUM',
             () => onSelect('MEDIUM'),
+            colors,
           ),
         ),
         const SizedBox(width: 10),
@@ -663,6 +703,7 @@ class HabitScreen extends HookConsumerWidget {
             AppColors.highPriorityColor,
             selected == 'HIGH',
             () => onSelect('HIGH'),
+            colors,
           ),
         ),
       ],
@@ -674,6 +715,7 @@ class HabitScreen extends HookConsumerWidget {
     Color color,
     bool isSelected,
     VoidCallback onTap,
+    AppColorScheme colors,
   ) {
     return GestureDetector(
       onTap: onTap,
@@ -681,10 +723,10 @@ class HabitScreen extends HookConsumerWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.habitSurface,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: isSelected ? color : AppColors.habitBorder.withOpacity(0.3),
+            color: isSelected ? color : colors.border.withOpacity(0.3),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -702,7 +744,7 @@ class HabitScreen extends HookConsumerWidget {
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? color : AppColors.habitIconGrey,
+                color: isSelected ? color : colors.textMuted,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -713,28 +755,38 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _motivationField(TextEditingController controller) {
+  Widget _motivationField(
+    TextEditingController controller,
+    AppColorScheme colors,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.3)),
+        border: Border.all(color: colors.border.withOpacity(0.3)),
       ),
       child: TextField(
         controller: controller,
         maxLines: 4,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
-        decoration: const InputDecoration(
+        style: TextStyle(color: colors.textPrimary, fontSize: 14),
+        decoration: InputDecoration(
           hintText: "Define your 'Why'... Success is the only option.",
-          hintStyle: TextStyle(color: Colors.white24, fontSize: 14),
+          hintStyle: TextStyle(
+            color: colors.textMuted.withOpacity(0.4),
+            fontSize: 14,
+          ),
           border: InputBorder.none,
         ),
       ),
     );
   }
 
-  Widget _createHabitButton(BuildContext context, VoidCallback onTap) {
+  Widget _createHabitButton(
+    BuildContext context,
+    VoidCallback onTap,
+    AppColorScheme colors,
+  ) {
     return Container(
       width: double.infinity,
       height: 60,
@@ -742,7 +794,7 @@ class HabitScreen extends HookConsumerWidget {
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: AppColors.habitPrimary.withOpacity(0.4),
+            color: colors.primary.withOpacity(0.4),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 10),
@@ -752,15 +804,15 @@ class HabitScreen extends HookConsumerWidget {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.habitPrimary,
+          backgroundColor: colors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
           padding: EdgeInsets.zero,
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.rocket_launch, color: Colors.white, size: 24),
             SizedBox(width: 12),
             Text(
@@ -778,20 +830,25 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _modeToggleItem(String label, bool isSelected, VoidCallback onTap) {
+  Widget _modeToggleItem(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+    AppColorScheme colors,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.habitPrimary : Colors.transparent,
+          color: isSelected ? colors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey,
+            color: isSelected ? Colors.white : colors.textMuted,
             fontWeight: FontWeight.bold,
             fontSize: 14,
             letterSpacing: 1.1,
@@ -859,45 +916,45 @@ class HabitScreen extends HookConsumerWidget {
     ValueNotifier<String> specificConsequence,
     ValueNotifier<List<ChallengeMilestone>> roadmap,
     VoidCallback onAccept,
+    AppColorScheme colors,
   ) {
     return [
-      _buildChSectionHeader('MISSION IDENTIFICATION'),
-      _buildChLabel('CHALLENGE NAME'),
-      _buildChTextField(nameController, 'E.G. NO-SURRENDER-MARCH'),
+      _buildChSectionHeader('MISSION IDENTIFICATION', colors),
+      _buildChLabel('CHALLENGE NAME', colors),
+      _buildChTextField(nameController, 'E.G. NO-SURRENDER-MARCH', colors),
       const SizedBox(height: 20),
-      _buildChLabel('DURATION (DAYS)'),
+      _buildChLabel('DURATION (DAYS)', colors),
       _buildChTextField(
         durationController,
         '30',
+        colors,
         keyboardType: TextInputType.number,
       ),
 
       const SizedBox(height: 30),
-      // Removed: THREAT LEVEL section - now defaults to HARD
-      // Removed: FAILURE CONSEQUENCE section - now defaults to mandatory punishment
-      _buildChSectionHeader('MISSION ROADMAP'),
+      _buildChSectionHeader('MISSION ROADMAP', colors),
       ...roadmap.value.map(
         (m) => _buildMilestoneTile(m, () {
           roadmap.value = roadmap.value
               .where((item) => item.id != m.id)
               .toList();
-        }),
+        }, colors),
       ),
       _buildAddMilestoneButton(() {
         _showAddMilestoneDialog(context, (m) {
           roadmap.value = [...roadmap.value, m];
         });
-      }),
+      }, colors),
 
       const SizedBox(height: 40),
-      _buildChWarningCard(),
+      _buildChWarningCard(colors),
       const SizedBox(height: 20),
-      _buildChAcceptButton(onAccept),
+      _buildChAcceptButton(onAccept, colors),
       const SizedBox(height: 40),
     ];
   }
 
-  Widget _buildChSectionHeader(String title) {
+  Widget _buildChSectionHeader(String title, AppColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15.0),
       child: Row(
@@ -906,15 +963,15 @@ class HabitScreen extends HookConsumerWidget {
             width: 4,
             height: 20,
             decoration: BoxDecoration(
-              color: AppColors.habitPrimary,
+              color: colors.primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(width: 10),
           Text(
             title,
-            style: const TextStyle(
-              color: AppColors.habitPrimary,
+            style: TextStyle(
+              color: colors.primary,
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
@@ -925,13 +982,13 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChLabel(String text) {
+  Widget _buildChLabel(String text, AppColorScheme colors) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.grey,
+        style: TextStyle(
+          color: colors.textMuted,
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
@@ -941,26 +998,27 @@ class HabitScreen extends HookConsumerWidget {
 
   Widget _buildChTextField(
     TextEditingController controller,
-    String hint, {
+    String hint,
+    AppColorScheme colors, {
     TextInputType? keyboardType,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.habitBorder),
+        border: Border.all(color: colors.border),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: colors.textPrimary,
           fontWeight: FontWeight.bold,
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
+          hintStyle: TextStyle(color: colors.textMuted.withOpacity(0.2)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -968,10 +1026,7 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  // Removed unused widgets: _buildChToggleItem, _buildChConsequenceTypeItem, _buildChSpecificConsequenceCard
-  // These were used for UI elements that are now hidden (threat level and consequences)
-
-  Widget _buildChWarningCard() {
+  Widget _buildChWarningCard(AppColorScheme colors) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1005,7 +1060,7 @@ class HabitScreen extends HookConsumerWidget {
                 Text(
                   'Once started, backing out has consequences. Your progress will be monitored by the brotherhood.',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                    color: colors.textSecondary,
                     fontSize: 12,
                     height: 1.4,
                   ),
@@ -1018,19 +1073,19 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChAcceptButton(VoidCallback onTap) {
+  Widget _buildChAcceptButton(VoidCallback onTap, AppColorScheme colors) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.habitPrimary,
+          backgroundColor: colors.primary,
           padding: const EdgeInsets.symmetric(vertical: 20),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 10,
-          shadowColor: AppColors.habitPrimary.withOpacity(0.5),
+          shadowColor: colors.primary.withOpacity(0.5),
         ),
         child: const Text(
           'ACCEPT THE CHALLENGE',
@@ -1048,28 +1103,25 @@ class HabitScreen extends HookConsumerWidget {
   Widget _buildMilestoneTile(
     ChallengeMilestone milestone,
     VoidCallback onRemove,
+    AppColorScheme colors,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.habitBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.habitPrimary.withOpacity(0.1),
+              color: colors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.flag,
-              color: AppColors.habitPrimary,
-              size: 20,
-            ),
+            child: Icon(Icons.flag, color: colors.primary, size: 20),
           ),
           const SizedBox(width: 15),
           Expanded(
@@ -1078,15 +1130,15 @@ class HabitScreen extends HookConsumerWidget {
               children: [
                 Text(
                   milestone.title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
                 Text(
                   '${milestone.durationDays} Days • ${milestone.subtasks.length} Subtasks',
-                  style: const TextStyle(color: Colors.grey, fontSize: 10),
+                  style: TextStyle(color: colors.textMuted, fontSize: 10),
                 ),
               ],
             ),
@@ -1104,27 +1156,24 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildAddMilestoneButton(VoidCallback onTap) {
+  Widget _buildAddMilestoneButton(VoidCallback onTap, AppColorScheme colors) {
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          border: Border.all(
-            color: AppColors.habitPrimary,
-            style: BorderStyle.solid,
-          ),
+          border: Border.all(color: colors.primary, style: BorderStyle.solid),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: AppColors.habitPrimary, size: 20),
-            SizedBox(width: 8),
+            Icon(Icons.add, color: colors.primary, size: 20),
+            const SizedBox(width: 8),
             Text(
               'ADD MILESTONE',
               style: TextStyle(
-                color: AppColors.habitPrimary,
+                color: colors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
@@ -1157,9 +1206,11 @@ class _MilestoneAddDialog extends HookWidget {
     final durationController = useTextEditingController(text: '7');
     final subtaskController = useTextEditingController();
     final subtasks = useState<List<String>>([]);
+    final editingIndex = useState<int?>(-1);
+    final colors = Theme.of(context).appColors;
 
     return Dialog(
-      backgroundColor: AppColors.habitSurface,
+      backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -1167,29 +1218,39 @@ class _MilestoneAddDialog extends HookWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Add Milestone',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 20),
-            _dialogTextField(titleController, 'Milestone Title (e.g. Phase 1)'),
+            _dialogTextField(
+              titleController,
+              'Milestone Title (e.g. Phase 1)',
+              colors,
+            ),
             const SizedBox(height: 15),
-            _dialogTextField(descController, 'Description', maxLines: 3),
+            _dialogTextField(
+              descController,
+              'Description',
+              colors,
+              maxLines: 3,
+            ),
             const SizedBox(height: 15),
             _dialogTextField(
               durationController,
               'Duration (Days)',
+              colors,
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 25),
-            const Text(
+            Text(
               'SUBTASKS',
               style: TextStyle(
-                color: AppColors.habitPrimary,
+                color: colors.primary,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -1198,20 +1259,36 @@ class _MilestoneAddDialog extends HookWidget {
             Row(
               children: [
                 Expanded(
-                  child: _dialogTextField(subtaskController, 'Add subtask...'),
+                  child: _dialogTextField(
+                    subtaskController,
+                    'Add subtask...',
+                    colors,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 IconButton(
-                  icon: const Icon(
-                    Icons.add_circle,
-                    color: AppColors.habitPrimary,
+                  icon: Icon(
+                    editingIndex.value != null && editingIndex.value! >= 0
+                        ? Icons.check_circle
+                        : Icons.add_circle,
+                    color: colors.primary,
                   ),
                   onPressed: () {
                     if (subtaskController.text.isNotEmpty) {
-                      subtasks.value = [
-                        ...subtasks.value,
-                        subtaskController.text,
-                      ];
+                      if (editingIndex.value != null &&
+                          editingIndex.value! >= 0) {
+                        // Update existing subtask
+                        final newList = List<String>.from(subtasks.value);
+                        newList[editingIndex.value!] = subtaskController.text;
+                        subtasks.value = newList;
+                        editingIndex.value = -1;
+                      } else {
+                        // Add new subtask
+                        subtasks.value = [
+                          ...subtasks.value,
+                          subtaskController.text,
+                        ];
+                      }
                       subtaskController.clear();
                     }
                   },
@@ -1219,37 +1296,71 @@ class _MilestoneAddDialog extends HookWidget {
               ],
             ),
             const SizedBox(height: 10),
-            ...subtasks.value.map(
-              (s) => Padding(
+            ...subtasks.value.asMap().entries.map((entry) {
+              final index = entry.key;
+              final s = entry.value;
+              return Padding(
                 padding: const EdgeInsets.only(bottom: 4.0),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.subdirectory_arrow_right,
-                      color: Colors.grey,
+                      color: colors.textMuted,
                       size: 14,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      s,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
+                    Expanded(
+                      child: Text(
+                        s,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.edit,
+                        color: editingIndex.value == index
+                            ? colors.primary
+                            : Colors.blueAccent,
+                        size: 14,
+                      ),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      onPressed: () {
+                        // Put the subtask text into the TextField for inline editing
+                        subtaskController.text = s;
+                        editingIndex.value = index;
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.redAccent,
+                        size: 14,
+                      ),
+                      constraints: const BoxConstraints(),
+                      padding: const EdgeInsets.all(4),
+                      onPressed: () {
+                        final newList = List<String>.from(subtasks.value);
+                        newList.removeAt(index);
+                        subtasks.value = newList;
+                      },
                     ),
                   ],
                 ),
-              ),
-            ),
+              );
+            }),
             const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'CANCEL',
-                    style: TextStyle(color: Colors.white30),
+                    style: TextStyle(color: colors.textMuted),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1277,7 +1388,7 @@ class _MilestoneAddDialog extends HookWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.habitPrimary,
+                    backgroundColor: colors.primary,
                   ),
                   child: const Text(
                     'ADD',
@@ -1297,7 +1408,8 @@ class _MilestoneAddDialog extends HookWidget {
 
   Widget _dialogTextField(
     TextEditingController controller,
-    String hint, {
+    String hint,
+    AppColorScheme colors, {
     int maxLines = 1,
     TextInputType? keyboardType,
   }) {
@@ -1305,12 +1417,15 @@ class _MilestoneAddDialog extends HookWidget {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: TextStyle(color: colors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+        hintStyle: TextStyle(
+          color: colors.textMuted.withOpacity(0.4),
+          fontSize: 13,
+        ),
         filled: true,
-        fillColor: AppColors.habitBg,
+        fillColor: colors.bg,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -1330,6 +1445,7 @@ class _CustomCategoryDialog extends HookWidget {
   Widget build(BuildContext context) {
     final nameController = useTextEditingController();
     final selectedIcon = useState(Icons.category);
+    final colors = Theme.of(context).appColors;
 
     final icons = [
       Icons.star,
@@ -1365,7 +1481,7 @@ class _CustomCategoryDialog extends HookWidget {
     ];
 
     return Dialog(
-      backgroundColor: AppColors.habitSurface,
+      backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -1373,10 +1489,10 @@ class _CustomCategoryDialog extends HookWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Add Custom Category',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -1384,12 +1500,12 @@ class _CustomCategoryDialog extends HookWidget {
             const SizedBox(height: 20),
             TextField(
               controller: nameController,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: colors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Category Name',
-                hintStyle: const TextStyle(color: Colors.white24),
+                hintStyle: TextStyle(color: colors.textMuted.withOpacity(0.4)),
                 filled: true,
-                fillColor: AppColors.habitBg,
+                fillColor: colors.bg,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -1397,9 +1513,9 @@ class _CustomCategoryDialog extends HookWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Select Icon',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -1419,16 +1535,12 @@ class _CustomCategoryDialog extends HookWidget {
                     onTap: () => selectedIcon.value = icon,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.habitPrimary
-                            : AppColors.habitBg,
+                        color: isSelected ? colors.primary : colors.bg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         icon,
-                        color: isSelected
-                            ? Colors.white
-                            : AppColors.habitIconGrey,
+                        color: isSelected ? Colors.white : colors.textMuted,
                         size: 20,
                       ),
                     ),
@@ -1442,9 +1554,9 @@ class _CustomCategoryDialog extends HookWidget {
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text(
+                  child: Text(
                     'CANCEL',
-                    style: TextStyle(color: Colors.white30),
+                    style: TextStyle(color: colors.textMuted),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1456,7 +1568,7 @@ class _CustomCategoryDialog extends HookWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.habitPrimary,
+                    backgroundColor: colors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

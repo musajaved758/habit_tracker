@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:operation_brotherhood/core/utils/colors.dart';
-import 'package:operation_brotherhood/features/challenge/presentation/providers/challenge_provider.dart';
-import 'package:operation_brotherhood/features/challenge/data/models/challenge_model.dart';
-import 'package:operation_brotherhood/features/habit/habit_screen.dart';
+import 'package:iron_mind/core/utils/colors.dart';
+import 'package:iron_mind/features/challenge/presentation/providers/challenge_provider.dart';
+import 'package:iron_mind/features/challenge/data/models/challenge_model.dart';
+import 'package:iron_mind/features/habit/habit_screen.dart';
+import 'package:iron_mind/features/challenge/presentation/screens/challenge_detail_screen.dart';
 
 class ChallengeScreen extends HookConsumerWidget {
   const ChallengeScreen({super.key});
@@ -11,18 +12,18 @@ class ChallengeScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final allChallenges = ref.watch(challengeProvider);
-    // Limit to 5 active challenges
     final challenges = allChallenges.take(5).toList();
+    final colors = Theme.of(context).appColors;
 
     return Scaffold(
-      backgroundColor: AppColors.habitBg,
+      backgroundColor: colors.bg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'MISSIONS',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
             fontSize: 20,
@@ -32,7 +33,7 @@ class ChallengeScreen extends HookConsumerWidget {
         automaticallyImplyLeading: false,
       ),
       body: challenges.isEmpty
-          ? _buildEmptyState()
+          ? _buildEmptyState(colors)
           : ListView.builder(
               padding: const EdgeInsets.all(20),
               itemCount: challenges.length,
@@ -40,14 +41,14 @@ class ChallengeScreen extends HookConsumerWidget {
                 final challenge = challenges[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 20.0),
-                  child: _buildChallengeCard(context, ref, challenge),
+                  child: _buildChallengeCard(context, ref, challenge, colors),
                 );
               },
             ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppColorScheme colors) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -55,13 +56,13 @@ class ChallengeScreen extends HookConsumerWidget {
           Icon(
             Icons.military_tech,
             size: 64,
-            color: Colors.white.withOpacity(0.2),
+            color: colors.textMuted.withOpacity(0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'NO ACTIVE MISSIONS',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: colors.textMuted,
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -76,6 +77,7 @@ class ChallengeScreen extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ChallengeModel challenge,
+    AppColorScheme colors,
   ) {
     final today = DateTime.now();
     final isTodayCompleted = challenge.isCompletedOn(today);
@@ -88,128 +90,150 @@ class ChallengeScreen extends HookConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.habitSurface,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.habitBorder.withOpacity(0.5)),
+        border: Border.all(color: colors.border.withOpacity(0.5)),
       ),
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 10, 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ChallengeDetailScreen(challenge: challenge),
+                ),
+              );
+            },
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+            child: Column(
               children: [
-                Expanded(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 10, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                _statusBadge(
+                                  challenge.threatLevel,
+                                  threatColor,
+                                ),
+                                const SizedBox(width: 8),
+                                _statusBadge(
+                                  'DAY ${challenge.daysElapsed + 1}',
+                                  colors.textMuted,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              challenge.name,
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_vert, color: colors.textMuted),
+                        color: colors.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        onSelected: (value) {
+                          if (value == 'delete') {
+                            _showAbandonDialog(context, ref, challenge, colors);
+                          } else if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    HabitScreen(challengeToEdit: challenge),
+                              ),
+                            );
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(
+                              'Edit Mission',
+                              style: TextStyle(color: colors.textPrimary),
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              'Abandon Mission',
+                              style: TextStyle(
+                                color: AppColors.highPriorityColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _statusBadge(challenge.threatLevel, threatColor),
-                          const SizedBox(width: 8),
-                          _statusBadge(
-                            'DAY ${challenge.daysElapsed + 1}',
-                            Colors.grey,
+                          Text(
+                            '${challenge.daysRemaining} DAYS REMAINING',
+                            style: TextStyle(
+                              color: colors.primary.withOpacity(0.8),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          Text(
+                            '${(challenge.progress * 100).toInt()}%',
+                            style: TextStyle(
+                              color: colors.textMuted,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        challenge.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: challenge.progress,
+                          minHeight: 6,
+                          backgroundColor: colors.progressBarBg,
+                          valueColor: AlwaysStoppedAnimation(colors.primary),
                         ),
                       ),
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.white54),
-                  color: AppColors.habitSurface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onSelected: (value) {
-                    if (value == 'delete') {
-                      _showAbandonDialog(context, ref, challenge);
-                    } else if (value == 'edit') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              HabitScreen(challengeToEdit: challenge),
-                        ),
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Text(
-                        'Edit Mission',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text(
-                        'Abandon Mission',
-                        style: TextStyle(color: AppColors.highPriorityColor),
-                      ),
-                    ),
-                  ],
-                ),
+                const SizedBox(height: 20),
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${challenge.daysRemaining} DAYS REMAINING',
-                      style: TextStyle(
-                        color: AppColors.habitPrimary.withOpacity(0.8),
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                    Text(
-                      '${(challenge.progress * 100).toInt()}%',
-                      style: const TextStyle(
-                        color: Colors.white38,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: LinearProgressIndicator(
-                    value: challenge.progress,
-                    minHeight: 6,
-                    backgroundColor: AppColors.habitBg,
-                    valueColor: const AlwaysStoppedAnimation(
-                      AppColors.habitPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
           InkWell(
             onTap: isTodayCompleted
-                ? null // LOCK BUTTON once completed
+                ? null
                 : () {
                     ref
                         .read(challengeProvider.notifier)
@@ -224,8 +248,8 @@ class ChallengeScreen extends HookConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
                 color: isTodayCompleted
-                    ? AppColors.habitPrimary.withOpacity(0.1)
-                    : AppColors.habitPrimary,
+                    ? colors.primary.withOpacity(0.1)
+                    : colors.primary,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
                   bottomRight: Radius.circular(24),
@@ -238,18 +262,14 @@ class ChallengeScreen extends HookConsumerWidget {
                     isTodayCompleted
                         ? Icons.check_circle
                         : Icons.check_circle_outline,
-                    color: isTodayCompleted
-                        ? AppColors.habitPrimary
-                        : Colors.white,
+                    color: isTodayCompleted ? colors.primary : Colors.white,
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     isTodayCompleted ? 'MISSION COMPLETED' : 'MARK COMPLETED',
                     style: TextStyle(
-                      color: isTodayCompleted
-                          ? AppColors.habitPrimary
-                          : Colors.white,
+                      color: isTodayCompleted ? colors.primary : Colors.white,
                       fontWeight: FontWeight.w900,
                       fontSize: 13,
                       letterSpacing: 1.2,
@@ -288,26 +308,27 @@ class ChallengeScreen extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     ChallengeModel challenge,
+    AppColorScheme colors,
   ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.habitSurface,
-        title: const Text(
+        backgroundColor: colors.dialogBg,
+        title: Text(
           'ABANDON MISSION?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        content: const Text(
+        content: Text(
           'A True Brother never retreats. Are you sure you want to surrender?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: colors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'STAY STRONG',
-              style: TextStyle(color: AppColors.habitPrimary),
-            ),
+            child: Text('STAY STRONG', style: TextStyle(color: colors.primary)),
           ),
           TextButton(
             onPressed: () {

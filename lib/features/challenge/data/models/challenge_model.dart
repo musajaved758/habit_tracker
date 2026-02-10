@@ -139,6 +139,44 @@ class ChallengeModel {
     return completedDates.length / duration;
   }
 
+  int get currentStreak {
+    if (completedDates.isEmpty) return 0;
+
+    final uniqueDates =
+        completedDates
+            .map((d) => DateTime(d.year, d.month, d.day))
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.compareTo(b));
+
+    if (uniqueDates.isEmpty) return 0;
+
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    final yesterdayDate = todayDate.subtract(const Duration(days: 1));
+
+    final lastCompleted = uniqueDates.last;
+
+    // If the last completed date is neither today nor yesterday, streak is 0
+    if (!lastCompleted.isAtSameMomentAs(todayDate) &&
+        !lastCompleted.isAtSameMomentAs(yesterdayDate)) {
+      return 0;
+    }
+
+    int streak = 1;
+    for (int i = uniqueDates.length - 1; i > 0; i--) {
+      final current = uniqueDates[i];
+      final prev = uniqueDates[i - 1];
+
+      if (current.difference(prev).inDays == 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
   ChallengeModel copyWith({
     String? id,
     String? name,
