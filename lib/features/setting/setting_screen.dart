@@ -29,61 +29,63 @@ class SettingScreen extends HookConsumerWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _sectionHeader('APPEARANCE', colors),
-          const SizedBox(height: 16),
-          _buildThemeSelector(context, ref, currentTheme, colors),
-          const SizedBox(height: 40),
-          _sectionHeader('PREFERENCES', colors),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: colors.border.withOpacity(0.5)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.swap_horiz, color: colors.textSecondary),
-                    const SizedBox(width: 16),
-                    Text(
-                      'Swap Challenges & Habit',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            _sectionHeader('APPEARANCE', colors),
+            const SizedBox(height: 16),
+            _buildThemeSelector(context, ref, currentTheme, colors),
+            const SizedBox(height: 40),
+            _sectionHeader('PREFERENCES', colors),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.border.withOpacity(0.5)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.swap_horiz, color: colors.textSecondary),
+                      const SizedBox(width: 16),
+                      Text(
+                        'Swap Challenges & Habit',
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Switch(
-                  value: ref.watch(swapHomeAndChallengeProvider),
-                  onChanged: (val) {
-                    ref.read(swapHomeAndChallengeProvider.notifier).state = val;
-                  },
-                  activeColor: colors.primary,
-                ),
-              ],
+                    ],
+                  ),
+                  Switch(
+                    value: ref.watch(swapHomeAndChallengeProvider),
+                    onChanged: (val) {
+                      ref.read(swapHomeAndChallengeProvider.notifier).state = val;
+                    },
+                    activeColor: colors.primary,
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 40),
-          _sectionHeader('ABOUT', colors),
-          const SizedBox(height: 16),
-          _buildInfoCard('Version', '1.0.0', Icons.info_outline, colors),
-          const SizedBox(height: 12),
-          _buildInfoCard(
-            'Developer',
-            'Operation Brotherhood',
-            Icons.code,
-            colors,
-          ),
-        ],
+            const SizedBox(height: 40),
+            _sectionHeader('ABOUT', colors),
+            const SizedBox(height: 16),
+            _buildInfoCard('Version', '1.0.0', Icons.info_outline, colors),
+            const SizedBox(height: 12),
+            _buildInfoCard(
+              'Developer',
+              'Operation Brotherhood',
+              Icons.code,
+              colors,
+            ),
+          ],
+        ),
       ),
     );
   }
