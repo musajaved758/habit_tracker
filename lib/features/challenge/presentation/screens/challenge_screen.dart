@@ -10,7 +10,9 @@ class ChallengeScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final challenges = ref.watch(challengeProvider);
+    final allChallenges = ref.watch(challengeProvider);
+    // Limit to 5 active challenges
+    final challenges = allChallenges.take(5).toList();
 
     return Scaffold(
       backgroundColor: AppColors.habitBg,

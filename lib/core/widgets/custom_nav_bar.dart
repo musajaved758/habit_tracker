@@ -24,11 +24,11 @@ class CustomNavBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navItem(0, Icons.grid_view_rounded, 'HQ'),
-            _navItem(1, Icons.calendar_today_rounded, 'TASKS'),
+            _navItem(0, Icons.grid_view_rounded, 'HOME'),
+            _navItem(1, Icons.calendar_today_rounded, 'PHASES'),
             _navItem(2, Icons.military_tech_rounded, 'MISSIONS'),
-            _navItem(3, Icons.show_chart_rounded, 'INTEL'),
-            _navItem(4, Icons.settings_rounded, 'COMM'),
+            _navItem(3, Icons.show_chart_rounded, 'PROGRESS'),
+            _navItem(4, Icons.settings_rounded, 'SETTINGS'),
           ],
         ),
       ),

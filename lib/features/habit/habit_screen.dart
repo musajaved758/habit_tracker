@@ -48,12 +48,12 @@ class HabitScreen extends HookConsumerWidget {
       );
     }
 
-    // Challenge Hooks
+    // Challenge Hooks with defaults for mandatory punishment
     final chNameController = useTextEditingController();
     final chDurationController = useTextEditingController(text: '30');
-    final threatLevel = useState('MEDIUM');
-    final chConsequenceType = useState('PHYSICAL');
-    final specificConsequence = useState('COLD SHOWER');
+    final threatLevel = useState('HARD'); // Default: HARD (mandatory)
+    final chConsequenceType = useState('PHYSICAL'); // Default: PHYSICAL
+    final specificConsequence = useState('COLD SHOWER'); // Default consequence
     final roadmap = useState<List<ChallengeMilestone>>([]);
 
     final creationMode = useState('HABIT'); // 'HABIT' or 'CHALLENGE'
@@ -873,86 +873,8 @@ class HabitScreen extends HookConsumerWidget {
       ),
 
       const SizedBox(height: 30),
-      _buildChSectionHeader('THREAT LEVEL'),
-      Row(
-        children: [
-          Expanded(
-            child: _buildChToggleItem(
-              'EASY',
-              threatLevel.value == 'EASY',
-              () => threatLevel.value = 'EASY',
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildChToggleItem(
-              'MEDIUM',
-              threatLevel.value == 'MEDIUM',
-              () => threatLevel.value = 'MEDIUM',
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: _buildChToggleItem(
-              'HARD',
-              threatLevel.value == 'HARD',
-              () => threatLevel.value = 'HARD',
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 30),
-      _buildChSectionHeader('FAILURE CONSEQUENCE'),
-      Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: AppColors.habitSurface,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildChConsequenceTypeItem(
-                'DONATE',
-                consequenceType.value == 'DONATE',
-                () => consequenceType.value = 'DONATE',
-              ),
-            ),
-            Expanded(
-              child: _buildChConsequenceTypeItem(
-                'PHYSICAL',
-                consequenceType.value == 'PHYSICAL',
-                () => consequenceType.value = 'PHYSICAL',
-              ),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 20),
-      Row(
-        children: [
-          Expanded(
-            child: _buildChSpecificConsequenceCard(
-              'COLD SHOWER',
-              Icons.ac_unit,
-              specificConsequence.value == 'COLD SHOWER',
-              () => specificConsequence.value = 'COLD SHOWER',
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: _buildChSpecificConsequenceCard(
-              'PUSHUPS (50)',
-              Icons.fitness_center,
-              specificConsequence.value == 'PUSHUPS (50)',
-              () => specificConsequence.value = 'PUSHUPS (50)',
-            ),
-          ),
-        ],
-      ),
-
-      const SizedBox(height: 30),
+      // Removed: THREAT LEVEL section - now defaults to HARD
+      // Removed: FAILURE CONSEQUENCE section - now defaults to mandatory punishment
       _buildChSectionHeader('MISSION ROADMAP'),
       ...roadmap.value.map(
         (m) => _buildMilestoneTile(m, () {
@@ -1046,101 +968,8 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChToggleItem(String label, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 15),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.habitPrimary.withOpacity(0.1)
-              : AppColors.habitSurface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.habitPrimary : AppColors.habitBorder,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppColors.habitPrimary : Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChConsequenceTypeItem(
-    String label,
-    bool isSelected,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.habitPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChSpecificConsequenceCard(
-    String label,
-    IconData icon,
-    bool isSelected,
-    VoidCallback onTap,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 30),
-        decoration: BoxDecoration(
-          color: AppColors.habitSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.habitPrimary : AppColors.habitBorder,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.habitPrimary : Colors.grey,
-              size: 32,
-            ),
-            const SizedBox(height: 15),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey,
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Removed unused widgets: _buildChToggleItem, _buildChConsequenceTypeItem, _buildChSpecificConsequenceCard
+  // These were used for UI elements that are now hidden (threat level and consequences)
 
   Widget _buildChWarningCard() {
     return Container(

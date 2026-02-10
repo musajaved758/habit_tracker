@@ -19,7 +19,7 @@ class IntelScreen extends HookConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'INTEL',
+          'PROGRESS',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w900,

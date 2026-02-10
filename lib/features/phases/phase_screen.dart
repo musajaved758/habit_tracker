@@ -7,6 +7,15 @@ import 'package:operation_brotherhood/features/challenge/data/models/challenge_m
 class PhaseScreen extends HookConsumerWidget {
   const PhaseScreen({super.key});
 
+  // Color palette for different operations
+  static const List<Color> operationColors = [
+    Color(0xFF6366F1), // Indigo
+    Color(0xFFEC4899), // Pink
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF8B5CF6), // Purple
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final challenges = ref.watch(challengeProvider);
@@ -35,7 +44,8 @@ class PhaseScreen extends HookConsumerWidget {
               itemCount: challenges.length,
               separatorBuilder: (context, index) => const SizedBox(height: 40),
               itemBuilder: (context, index) {
-                return _buildRoadmap(challenges[index], context, ref);
+                final color = operationColors[index % operationColors.length];
+                return _buildRoadmap(challenges[index], context, ref, color);
               },
             ),
     );
@@ -70,6 +80,7 @@ class PhaseScreen extends HookConsumerWidget {
     ChallengeModel challenge,
     BuildContext context,
     WidgetRef ref,
+    Color accentColor,
   ) {
     final roadmap = challenge.roadmap;
     if (roadmap.isEmpty) return const SizedBox.shrink();
@@ -81,8 +92,8 @@ class PhaseScreen extends HookConsumerWidget {
           padding: const EdgeInsets.only(left: 4.0, bottom: 20),
           child: Text(
             'OPERATION: ${challenge.name.toUpperCase()}',
-            style: const TextStyle(
-              color: AppColors.habitPrimary,
+            style: TextStyle(
+              color: accentColor,
               fontWeight: FontWeight.w900,
               fontSize: 16,
               letterSpacing: 1.2,
@@ -116,6 +127,7 @@ class PhaseScreen extends HookConsumerWidget {
               isLocked,
               ref,
               context,
+              accentColor,
             );
           },
         ),
@@ -131,8 +143,9 @@ class PhaseScreen extends HookConsumerWidget {
     bool isLocked,
     WidgetRef ref,
     BuildContext context,
+    Color accentColor,
   ) {
-    Color primaryColor = isLocked ? Colors.grey : AppColors.habitPrimary;
+    Color primaryColor = isLocked ? Colors.grey : accentColor;
     Color bgColor = isLocked
         ? Colors.white.withOpacity(0.05)
         : AppColors.habitSurface;
