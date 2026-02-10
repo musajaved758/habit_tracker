@@ -45,6 +45,11 @@ class ChallengeNotifier extends Notifier<List<ChallengeModel>> {
     ref.invalidateSelf();
   }
 
+  Future<void> updateChallenge(ChallengeModel challenge) async {
+    await HiveService.updateChallenge(challenge);
+    ref.invalidateSelf();
+  }
+
   ChallengeModel? get activeChallenge {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);

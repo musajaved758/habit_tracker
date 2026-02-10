@@ -78,7 +78,28 @@ class HabitScreen extends HookConsumerWidget {
       Navigator.pop(context);
     }
 
+    // Challenge limit logic
+    final challenges = ref.watch(challengeProvider);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final activeChallengesCount = challenges.where((challenge) {
+      final endDate = challenge.startDate.add(
+        Duration(days: challenge.duration),
+      );
+      return (challenge.startDate.isBefore(today) ||
+              challenge.startDate.isAtSameMomentAs(today)) &&
+          endDate.isAfter(today);
+    }).length;
+
     final creationMode = useState('HABIT'); // 'HABIT' or 'CHALLENGE'
+    final isChallengeLimitReached = activeChallengesCount >= 5;
+
+    // Reset mode to HABIT if challenge was selected but limit reached (e.g. after adding one)
+    if (isChallengeLimitReached && creationMode.value == 'CHALLENGE') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        creationMode.value = 'HABIT';
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.habitBg,
@@ -121,13 +142,14 @@ class HabitScreen extends HookConsumerWidget {
                       () => creationMode.value = 'HABIT',
                     ),
                   ),
-                  Expanded(
-                    child: _modeToggleItem(
-                      'CHALLENGE',
-                      creationMode.value == 'CHALLENGE',
-                      () => creationMode.value = 'CHALLENGE',
+                  if (!isChallengeLimitReached)
+                    Expanded(
+                      child: _modeToggleItem(
+                        'CHALLENGE',
+                        creationMode.value == 'CHALLENGE',
+                        () => creationMode.value = 'CHALLENGE',
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -136,115 +158,115 @@ class HabitScreen extends HookConsumerWidget {
             if (creationMode.value == 'HABIT') ...[
               // HABIT IDENTITY
               _sectionHeader('HABIT IDENTITY'),
-            _customTextField(
-              controller: nameController,
-              hintText: 'e.g. Morning Meditation',
-              label: 'Habit Name',
-              maxLength: 30,
-            ),
+              _customTextField(
+                controller: nameController,
+                hintText: 'e.g. Morning Meditation',
+                label: 'Habit Name',
+                maxLength: 30,
+              ),
 
-            SizedBox(height: context.h(3)),
+              SizedBox(height: context.h(3)),
 
-            // CATEGORY
-            _sectionHeader('CATEGORY'),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  ...categories.value.map(
-                    (cat) => _categoryChip(
+              // CATEGORY
+              _sectionHeader('CATEGORY'),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ...categories.value.map(
+                      (cat) => _categoryChip(
+                        context,
+                        cat['name'] as String,
+                        cat['icon'] as IconData,
+                        selectedCategory.value == cat['name'],
+                        () {
+                          selectedCategory.value = cat['name'] as String;
+                          selectedIcon.value =
+                              (cat['icon'] as IconData).codePoint;
+                        },
+                      ),
+                    ),
+                    _categoryChip(
                       context,
-                      cat['name'] as String,
-                      cat['icon'] as IconData,
-                      selectedCategory.value == cat['name'],
-                      () {
-                        selectedCategory.value = cat['name'] as String;
-                        selectedIcon.value =
-                            (cat['icon'] as IconData).codePoint;
-                      },
+                      'Custom',
+                      Icons.add,
+                      false,
+                      _showCustomCategoryDialog,
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: context.h(3)),
+
+              // FREQUENCY & GOAL
+              Row(
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionHeader('FREQUENCY'),
+                        _frequencyToggle(
+                          context,
+                          selectedFrequency.value,
+                          (val) => selectedFrequency.value = val,
+                        ),
+                      ],
                     ),
                   ),
-                  _categoryChip(
-                    context,
-                    'Custom',
-                    Icons.add,
-                    false,
-                    _showCustomCategoryDialog,
+                  const SizedBox(width: 15),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sectionHeader('GOAL/TARGET'),
+                        _goalInput(
+                          context,
+                          targetValue.value,
+                          targetUnit.value,
+                          (val) => targetValue.value = val,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
 
-            SizedBox(height: context.h(3)),
+              SizedBox(height: context.h(3)),
 
-            // FREQUENCY & GOAL
-            Row(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionHeader('FREQUENCY'),
-                      _frequencyToggle(
-                        context,
-                        selectedFrequency.value,
-                        (val) => selectedFrequency.value = val,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _sectionHeader('GOAL/TARGET'),
-                      _goalInput(
-                        context,
-                        targetValue.value,
-                        targetUnit.value,
-                        (val) => targetValue.value = val,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              // END DATE SETTER
+              _sectionHeader('HABIT DURATION'),
+              _endDateSetter(
+                context,
+                endDate.value,
+                (val) => endDate.value = val,
+              ),
 
-            SizedBox(height: context.h(3)),
+              SizedBox(height: context.h(3)),
 
-            // END DATE SETTER
-            _sectionHeader('HABIT DURATION'),
-            _endDateSetter(
-              context,
-              endDate.value,
-              (val) => endDate.value = val,
-            ),
+              // PRIORITY LEVEL
+              _sectionHeader('PRIORITY LEVEL'),
+              _prioritySelector(
+                context,
+                priority.value,
+                (val) => priority.value = val,
+              ),
 
-            SizedBox(height: context.h(3)),
+              SizedBox(height: context.h(3)),
 
-            // PRIORITY LEVEL
-            _sectionHeader('PRIORITY LEVEL'),
-            _prioritySelector(
-              context,
-              priority.value,
-              (val) => priority.value = val,
-            ),
+              // MOTIVATION NOTE
+              _sectionHeader('MOTIVATION NOTE'),
+              _motivationField(noteController),
 
-            SizedBox(height: context.h(3)),
+              SizedBox(height: context.h(4)),
 
-            // MOTIVATION NOTE
-            _sectionHeader('MOTIVATION NOTE'),
-            _motivationField(noteController),
+              // CREATE HABIT BUTTON
+              _createHabitButton(context, handleCreateHabit),
 
-            SizedBox(height: context.h(4)),
-
-            // CREATE HABIT BUTTON
-            _createHabitButton(context, handleCreateHabit),
-
-            SizedBox(height: context.h(5)),
+              SizedBox(height: context.h(5)),
             ] else ...[
               ..._buildChallengeForm(
                 context,
@@ -265,10 +287,11 @@ class HabitScreen extends HookConsumerWidget {
                 ),
               ),
             ],
-        ],
+          ],
+        ),
       ),
-    ),
-    );}
+    );
+  }
 
   Widget _sectionHeader(String title) {
     return Padding(
@@ -763,14 +786,18 @@ class HabitScreen extends HookConsumerWidget {
   ) {
     if (nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a mission identification name')),
+        const SnackBar(
+          content: Text('Please enter a mission identification name'),
+        ),
       );
       return;
     }
 
     final duration = int.tryParse(durationController.text) ?? 30;
 
-    ref.read(challengeProvider.notifier).addChallenge(
+    ref
+        .read(challengeProvider.notifier)
+        .addChallenge(
           name: nameController.text.toUpperCase(),
           duration: duration,
           threatLevel: threatLevel.value,
@@ -798,17 +825,39 @@ class HabitScreen extends HookConsumerWidget {
       _buildChTextField(nameController, 'E.G. NO-SURRENDER-MARCH'),
       const SizedBox(height: 20),
       _buildChLabel('DURATION (DAYS)'),
-      _buildChTextField(durationController, '30', keyboardType: TextInputType.number),
+      _buildChTextField(
+        durationController,
+        '30',
+        keyboardType: TextInputType.number,
+      ),
 
       const SizedBox(height: 30),
       _buildChSectionHeader('THREAT LEVEL'),
       Row(
         children: [
-          Expanded(child: _buildChToggleItem('EASY', threatLevel.value == 'EASY', () => threatLevel.value = 'EASY')),
+          Expanded(
+            child: _buildChToggleItem(
+              'EASY',
+              threatLevel.value == 'EASY',
+              () => threatLevel.value = 'EASY',
+            ),
+          ),
           const SizedBox(width: 10),
-          Expanded(child: _buildChToggleItem('MEDIUM', threatLevel.value == 'MEDIUM', () => threatLevel.value = 'MEDIUM')),
+          Expanded(
+            child: _buildChToggleItem(
+              'MEDIUM',
+              threatLevel.value == 'MEDIUM',
+              () => threatLevel.value = 'MEDIUM',
+            ),
+          ),
           const SizedBox(width: 10),
-          Expanded(child: _buildChToggleItem('HARD', threatLevel.value == 'HARD', () => threatLevel.value = 'HARD')),
+          Expanded(
+            child: _buildChToggleItem(
+              'HARD',
+              threatLevel.value == 'HARD',
+              () => threatLevel.value = 'HARD',
+            ),
+          ),
         ],
       ),
 
@@ -822,8 +871,20 @@ class HabitScreen extends HookConsumerWidget {
         ),
         child: Row(
           children: [
-            Expanded(child: _buildChConsequenceTypeItem('DONATE', consequenceType.value == 'DONATE', () => consequenceType.value = 'DONATE')),
-            Expanded(child: _buildChConsequenceTypeItem('PHYSICAL', consequenceType.value == 'PHYSICAL', () => consequenceType.value = 'PHYSICAL')),
+            Expanded(
+              child: _buildChConsequenceTypeItem(
+                'DONATE',
+                consequenceType.value == 'DONATE',
+                () => consequenceType.value = 'DONATE',
+              ),
+            ),
+            Expanded(
+              child: _buildChConsequenceTypeItem(
+                'PHYSICAL',
+                consequenceType.value == 'PHYSICAL',
+                () => consequenceType.value = 'PHYSICAL',
+              ),
+            ),
           ],
         ),
       ),
@@ -900,7 +961,11 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChTextField(TextEditingController controller, String hint, {TextInputType? keyboardType}) {
+  Widget _buildChTextField(
+    TextEditingController controller,
+    String hint, {
+    TextInputType? keyboardType,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -911,7 +976,10 @@ class HabitScreen extends HookConsumerWidget {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.white.withOpacity(0.1)),
@@ -929,7 +997,9 @@ class HabitScreen extends HookConsumerWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 15),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.habitPrimary.withOpacity(0.1) : AppColors.habitSurface,
+          color: isSelected
+              ? AppColors.habitPrimary.withOpacity(0.1)
+              : AppColors.habitSurface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? AppColors.habitPrimary : AppColors.habitBorder,
@@ -949,7 +1019,11 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChConsequenceTypeItem(String label, bool isSelected, VoidCallback onTap) {
+  Widget _buildChConsequenceTypeItem(
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -971,7 +1045,12 @@ class HabitScreen extends HookConsumerWidget {
     );
   }
 
-  Widget _buildChSpecificConsequenceCard(String label, IconData icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildChSpecificConsequenceCard(
+    String label,
+    IconData icon,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -987,7 +1066,11 @@ class HabitScreen extends HookConsumerWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? AppColors.habitPrimary : Colors.grey, size: 32),
+            Icon(
+              icon,
+              color: isSelected ? AppColors.habitPrimary : Colors.grey,
+              size: 32,
+            ),
             const SizedBox(height: 15),
             Text(
               label,
@@ -1014,7 +1097,11 @@ class HabitScreen extends HookConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded, color: AppColors.highPriorityColor, size: 28),
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AppColors.highPriorityColor,
+            size: 28,
+          ),
           const SizedBox(width: 15),
           Expanded(
             child: Column(
@@ -1054,7 +1141,9 @@ class HabitScreen extends HookConsumerWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.habitPrimary,
           padding: const EdgeInsets.symmetric(vertical: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           elevation: 10,
           shadowColor: AppColors.habitPrimary.withOpacity(0.5),
         ),

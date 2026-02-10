@@ -13,12 +13,12 @@ class MainScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navIndexProvider);
 
-    final pages = const [
-      HomeScreen(),
-      PhaseScreen(),
-      ChallengeScreen(),
-      ProgressScreen(),
-      SettingScreen(),
+    final pages = [
+      const HomeScreen(),
+      const PhaseScreen(),
+      const ChallengeScreen(),
+      const IntelScreen(),
+      const SettingScreen(),
     ];
 
     return Scaffold(
