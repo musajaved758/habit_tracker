@@ -11,7 +11,64 @@ final challengeProvider =
 class ChallengeNotifier extends Notifier<List<ChallengeModel>> {
   @override
   List<ChallengeModel> build() {
-    return HiveService.getChallenges();
+    final challenges = HiveService.getChallenges();
+    final order = HiveService.getSetting('challenge_order') as List?;
+
+    if (order == null || order.isEmpty) return challenges;
+
+    // Create a map for quick lookup
+    final challengeMap = {for (var c in challenges) c.id: c};
+
+    // Build sorted list based on order
+    final List<ChallengeModel> sorted = [];
+    for (var id in order) {
+      if (challengeMap.containsKey(id)) {
+        sorted.add(challengeMap[id]!);
+        challengeMap.remove(id);
+      }
+    }
+
+    // Add any challenges not in the order list (new ones)
+    sorted.addAll(challengeMap.values);
+
+    return sorted;
+  }
+
+  Future<void> reorderChallenges(
+    int oldIndex,
+    int newIndex,
+    List<String> visibleIds,
+  ) async {
+    if (oldIndex < 0 || oldIndex >= visibleIds.length) return;
+
+    // Normalize newIndex for move
+    int normalizedNewIndex = newIndex;
+    if (oldIndex < newIndex) {
+      normalizedNewIndex -= 1;
+    }
+    if (normalizedNewIndex < 0) normalizedNewIndex = 0;
+    if (normalizedNewIndex >= visibleIds.length)
+      normalizedNewIndex = visibleIds.length - 1;
+
+    if (oldIndex == normalizedNewIndex) return;
+
+    final String oldId = visibleIds[oldIndex];
+    final String targetId = visibleIds[normalizedNewIndex];
+
+    final List<ChallengeModel> newList = List.from(state);
+    final masterOldIndex = newList.indexWhere((c) => c.id == oldId);
+    final masterTargetIndex = newList.indexWhere((c) => c.id == targetId);
+
+    if (masterOldIndex == -1 || masterTargetIndex == -1) return;
+
+    final item = newList.removeAt(masterOldIndex);
+    newList.insert(masterTargetIndex, item);
+
+    state = newList;
+
+    // Persist order
+    final order = newList.map((c) => c.id).toList();
+    await HiveService.saveSetting('challenge_order', order);
   }
 
   Future<void> addChallenge({

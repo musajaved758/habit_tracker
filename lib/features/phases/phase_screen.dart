@@ -44,19 +44,20 @@ class PhaseScreen extends HookConsumerWidget {
         top: false,
         child: activeChallenges.isEmpty
             ? _buildEmptyState(colors)
-            : ListView.separated(
+            : ListView.builder(
                 padding: const EdgeInsets.all(20),
                 itemCount: activeChallenges.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 40),
                 itemBuilder: (context, index) {
                   final color = operationColors[index % operationColors.length];
-                  return _buildRoadmap(
-                    activeChallenges[index],
-                    context,
-                    ref,
-                    color,
-                    colors,
+                  return Padding(
+                    padding: EdgeInsetsGeometry.only(bottom: 15),
+                    child: _buildRoadmap(
+                      activeChallenges[index],
+                      context,
+                      ref,
+                      color,
+                      colors,
+                    ),
                   );
                 },
               ),

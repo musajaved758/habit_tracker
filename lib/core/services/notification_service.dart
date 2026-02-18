@@ -256,66 +256,6 @@ class NotificationService {
     debugPrint('Notification scheduled (both methods)!');
   }
 
-  /// Schedule a test notification 10 seconds from now using Future.delayed
-  /// This bypasses AlarmManager entirely to test if the issue is with scheduling
-  static Future<void> scheduleTestIn30Seconds() async {
-    if (!_initialized) {
-      debugPrint('ERROR: NotificationService not initialized!');
-      return;
-    }
-
-    debugPrint('=== SCHEDULING TEST via Future.delayed (10s) ===');
-    debugPrint('Current time: ${DateTime.now()}');
-    debugPrint(
-      'Will fire at: ${DateTime.now().add(const Duration(seconds: 10))}',
-    );
-    debugPrint('================================================');
-
-    Future.delayed(const Duration(seconds: 10), () async {
-      debugPrint('Future.delayed fired! Showing notification now...');
-      await _notificationsPlugin.show(
-        98,
-        'Delayed Test',
-        'This was scheduled 10 seconds ago via Future.delayed!',
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'daily_reminder',
-            'Daily Reminder',
-            channelDescription: 'Test notification',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-      );
-      debugPrint('Delayed test notification shown!');
-    });
-
-    debugPrint('Future.delayed test scheduled (keep app open for 10 seconds)');
-  }
-
-  /// Show a test notification immediately
-  static Future<void> showTestNotification() async {
-    debugPrint('Firing immediate test notification...');
-    await _notificationsPlugin.show(
-      99,
-      'Test Notification',
-      'If you see this, notifications are working!',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'daily_reminder',
-          'Daily Reminder',
-          channelDescription:
-              'Reminds you to check your progress and challenges',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-    );
-    debugPrint('Test notification fired!');
-  }
-
   static tz.TZDateTime _nextInstanceOfTime(TimeOfDay time) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate = tz.TZDateTime(
